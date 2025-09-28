@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { InvoiceStatus } from "@prisma/client"
 
 export async function GET(
   request: NextRequest,
@@ -42,9 +43,9 @@ export async function GET(
     const paidValue = client.invoices
       .filter(invoice => invoice.status === "PAID")
       .reduce((sum, invoice) => sum + Number(invoice.total), 0)
-    const pendingValue = client.invoices
-      .filter(invoice => invoice.status === "PENDING" || invoice.status === "SENT")
-      .reduce((sum, invoice) => sum + Number(invoice.total), 0)
+      const pendingValue = client.invoices
+      .filter(inv => inv.status === InvoiceStatus.PENDING || inv.status === InvoiceStatus.SENT)
+      .reduce((sum, inv) => sum + Number(inv.total), 0)
 
     const clientWithStats = {
       ...client,

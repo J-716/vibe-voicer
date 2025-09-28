@@ -65,13 +65,13 @@ export default function InvoicesPage() {
   }, [])
 
   const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = 
+    const matchesSearch =
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.client.name.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesStatus = statusFilter === "all" || 
+
+    const matchesStatus = statusFilter === "all" ||
       invoice.status.toLowerCase() === statusFilter.toLowerCase()
-    
+
     return matchesSearch && matchesStatus
   })
 
@@ -279,7 +279,7 @@ export default function InvoicesPage() {
                   filteredInvoices.map((invoice) => (
                     <TableRow key={invoice.id} className="hover:bg-gray-50 transition-colors">
                       <TableCell className="font-medium">
-                        <Link 
+                        <Link
                           href={`/invoices/${invoice.id}`}
                           className="hover:underline text-blue-600 hover:text-blue-800"
                         >
@@ -308,86 +308,87 @@ export default function InvoicesPage() {
                           <span>{invoice.status}</span>
                         </Badge>
                       </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-1">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          asChild
-                          className="hover:bg-blue-50 hover:text-blue-600"
-                        >
-                          <Link href={`/i/${invoice.publicSlug}`} target="_blank" title="View Public Invoice">
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          asChild
-                          className="hover:bg-green-50 hover:text-green-600"
-                        >
-                          <Link href={`/invoices/${invoice.id}`} title="Edit Invoice">
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              console.log('Starting PDF download for invoice:', invoice.id)
-                              const response = await fetch(`/api/invoices/${invoice.id}/pdf`, {
-                                credentials: 'include',
-                              })
-                              
-                              console.log('PDF response status:', response.status)
-                              console.log('PDF response headers:', Object.fromEntries(response.headers.entries()))
-                              
-                              if (!response.ok) {
-                                const errorText = await response.text()
-                                console.error('PDF response error:', errorText)
-                                throw new Error(`Failed to download PDF: ${response.status} ${errorText}`)
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="hover:bg-blue-50 hover:text-blue-600"
+                          >
+                            <Link href={`/i/${invoice.publicSlug}`} target="_blank" title="View Public Invoice">
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="hover:bg-green-50 hover:text-green-600"
+                          >
+                            <Link href={`/invoices/${invoice.id}`} title="Edit Invoice">
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                console.log('Starting PDF download for invoice:', invoice.id)
+                                const response = await fetch(`/api/invoices/${invoice.id}/pdf`, {
+                                  credentials: 'include',
+                                })
+
+                                console.log('PDF response status:', response.status)
+                                console.log('PDF response headers:', Object.fromEntries(response.headers.entries()))
+
+                                if (!response.ok) {
+                                  const errorText = await response.text()
+                                  console.error('PDF response error:', errorText)
+                                  throw new Error(`Failed to download PDF: ${response.status} ${errorText}`)
+                                }
+
+                                const blob = await response.blob()
+                                console.log('PDF blob size:', blob.size)
+
+                                if (blob.size === 0) {
+                                  throw new Error('PDF file is empty')
+                                }
+
+                                const url = window.URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.style.display = 'none'
+                                a.href = url
+                                a.download = `invoice-${invoice.invoiceNumber}.pdf`
+                                document.body.appendChild(a)
+                                a.click()
+                                window.URL.revokeObjectURL(url)
+                                document.body.removeChild(a)
+                                toast.success('PDF downloaded successfully')
+                              } catch (error) {
+                                console.error('Error downloading PDF:', error)
+                                const message = error instanceof Error ? error.message : String(error)
+                                toast.error(`Failed to download PDF: ${message}`)
                               }
-                              
-                              const blob = await response.blob()
-                              console.log('PDF blob size:', blob.size)
-                              
-                              if (blob.size === 0) {
-                                throw new Error('PDF file is empty')
-                              }
-                              
-                              const url = window.URL.createObjectURL(blob)
-                              const a = document.createElement('a')
-                              a.style.display = 'none'
-                              a.href = url
-                              a.download = `invoice-${invoice.invoiceNumber}.pdf`
-                              document.body.appendChild(a)
-                              a.click()
-                              window.URL.revokeObjectURL(url)
-                              document.body.removeChild(a)
-                              toast.success('PDF downloaded successfully')
-                            } catch (error) {
-                              console.error('Error downloading PDF:', error)
-                              toast.error(`Failed to download PDF: ${error.message}`)
-                            }
-                          }}
-                          className="hover:bg-purple-50 hover:text-purple-600"
-                          title="Download PDF"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDeleteInvoice(invoice.id)}
-                          disabled={deletingId === invoice.id}
-                          className="hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                          title="Delete Invoice"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                            }}
+                            className="hover:bg-purple-50 hover:text-purple-600"
+                            title="Download PDF"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteInvoice(invoice.id)}
+                            disabled={deletingId === invoice.id}
+                            className="hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                            title="Delete Invoice"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

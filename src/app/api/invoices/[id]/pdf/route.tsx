@@ -105,13 +105,21 @@ export async function GET(
       console.log("PDF generated successfully, buffer size:", buffer.length)
     } catch (pdfError) {
       console.error("Error during PDF rendering:", pdfError)
-      console.error("PDF error stack:", pdfError.stack)
-      console.error("PDF error details:", {
-        name: pdfError.name,
-        message: pdfError.message,
-        cause: pdfError.cause,
-      })
-      throw new Error(`PDF rendering failed: ${pdfError.message}`)
+      
+      // Type guard to check if error is an Error instance
+      if (pdfError instanceof Error) {
+        console.error("PDF error stack:", pdfError.stack)
+        console.error("PDF error details:", {
+          name: pdfError.name,
+          message: pdfError.message,
+          cause: pdfError.cause,
+        })
+        throw new Error(`PDF rendering failed: ${pdfError.message}`)
+      } else {
+        // Handle non-Error objects
+        console.error("PDF error details:", pdfError)
+        throw new Error(`PDF rendering failed: ${String(pdfError)}`)
+      }
     }
 
     return new Response(new Uint8Array(buffer), {
