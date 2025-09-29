@@ -9,7 +9,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true, // Re-enable email verification with Resend
+    requireEmailVerification: process.env.RESEND_API_KEY ? true : false, // Only require verification if Resend is configured
     sendResetPassword: async ({ user, url, token }, request) => {
       const template = getPasswordResetEmailTemplate(url, user)
       await sendEmail({
@@ -60,12 +60,14 @@ export const auth = betterAuth({
       },
     },
   },
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL || (process.env.NODE_ENV === "production" ? "https://www.j-designs.org" : "http://localhost:3000"),
   secret: process.env.BETTER_AUTH_SECRET || "your-secret-key-here",
   trustedOrigins: [
     "http://localhost:3000",
     "https://localhost:3000",
     process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    "https://www.j-designs.org",
+    "https://j-designs.org",
     ...(process.env.NODE_ENV === "production" ? [process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : ""] : [])
   ].filter(Boolean),
   ...(process.env.NODE_ENV === "development" ? { trustHost: true } : {}),
