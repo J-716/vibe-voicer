@@ -57,7 +57,9 @@ export default function RegisterPage() {
         } else if (error.code) {
           errorMessage = `Error: ${error.code}`
         } else if (typeof error === 'object' && Object.keys(error).length === 0) {
-          errorMessage = "Email service error. Account created but verification email failed to send."
+          errorMessage = "Email service not configured. Please contact support."
+        } else if (error.status === 500) {
+          errorMessage = "Server error. Please try again or contact support."
         }
         
         throw new Error(errorMessage)
@@ -125,7 +127,7 @@ export default function RegisterPage() {
       {/* Hero Section */}
       <section className="relative py-24 lg:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--green)]/8 via-[var(--peach)]/8 to-[var(--mauve)]/8"></div>
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9InZhcig--bWF1dmUpIiBmaWxsLW9wYWNpdHk9IjAuMDgiPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjIiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-60"></div>
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5Yz0wYjMiIGZpbGwtb3BhY2l0eT0iMC4wOCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-60"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-background/20"></div>
         
         <div className="container mx-auto px-4 relative z-10">

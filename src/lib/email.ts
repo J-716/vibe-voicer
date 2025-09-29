@@ -13,7 +13,8 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 export const sendEmail = async ({ to, subject, text, html }: EmailOptions) => {
   try {
     if (!resend) {
-      throw new Error('RESEND_API_KEY is required. Please set it in your environment variables.')
+      console.error('RESEND_API_KEY is not configured')
+      throw new Error('Email service not configured. Please contact support.')
     }
 
     const { data, error } = await resend.emails.send({
@@ -26,7 +27,7 @@ export const sendEmail = async ({ to, subject, text, html }: EmailOptions) => {
 
     if (error) {
       console.error('Resend error:', error)
-      throw new Error(`Resend error: ${error.message}`)
+      throw new Error(`Email service error: ${error.message}`)
     }
 
     if (process.env.NODE_ENV === 'development') {
