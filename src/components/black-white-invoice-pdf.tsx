@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 15,
     paddingBottom: 10,
-    borderBottom: "2px solid #1e66f5",
+    borderBottom: "2px solid #000000",
   },
   companyInfo: {
     flexDirection: "column",
@@ -24,13 +24,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 6,
-    color: "#1e66f5",
+    color: "#000000",
     textAlign: "left",
   },
   companyDetails: {
     fontSize: 10,
     lineHeight: 1.3,
-    color: "#6c6f85",
+    color: "#000000",
     textAlign: "left",
   },
   invoiceInfo: {
@@ -41,16 +41,16 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 8,
-    color: "#1e66f5",
+    color: "#000000",
     textAlign: "right",
   },
   invoiceNumber: {
     fontSize: 10,
-    color: "#1e66f5",
-    backgroundColor: "#e6e9ef",
+    color: "#000000",
+    backgroundColor: "#f5f5f5",
     padding: "6px 12px",
     borderRadius: 4,
-    border: "1px solid #1e66f5",
+    border: "1px solid #000000",
     fontWeight: "bold",
     textAlign: "center",
     alignSelf: "center",
@@ -59,8 +59,8 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     fontSize: 12,
-    color: "#1e66f5",
-    backgroundColor: "#e6e9ef",
+    color: "#000000",
+    backgroundColor: "#f5f5f5",
     padding: "12px 20px",
     borderRadius: 4,
     marginTop: 6,
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: "auto",
     letterSpacing: 1,
-    border: "1px solid #1e66f5",
+    border: "1px solid #000000",
     flex: 1,
     textAlign: "center",
     alignItems: "center",
@@ -77,10 +77,10 @@ const styles = StyleSheet.create({
   },
   clientInfo: {
     marginBottom: 10,
-    backgroundColor: "#e6e9ef",
+    backgroundColor: "#f9f9f9",
     padding: 10,
     borderRadius: 4,
-    border: "1px solid #ccd0da",
+    border: "1px solid #000000",
     flex: 1,
     marginRight: 10,
   },
@@ -88,21 +88,21 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "bold",
     marginBottom: 6,
-    color: "#1e66f5",
+    color: "#000000",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   clientDetails: {
     fontSize: 9,
     lineHeight: 1.2,
-    color: "#6c6f85",
+    color: "#000000",
   },
   invoiceDetails: {
     marginBottom: 10,
-    backgroundColor: "#e6e9ef",
+    backgroundColor: "#f9f9f9",
     padding: 10,
     borderRadius: 4,
-    border: "1px solid #ccd0da",
+    border: "1px solid #000000",
     flex: 1,
     textAlign: "center",
     alignItems: "center",
@@ -110,26 +110,26 @@ const styles = StyleSheet.create({
   },
   table: {
     marginTop: 10,
-    border: "2px solid #1e66f5",
+    border: "2px solid #000000",
     borderRadius: 4,
     overflow: "hidden",
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#1e66f5",
+    backgroundColor: "#000000",
     padding: 8,
   },
   tableRow: {
     flexDirection: "row",
     padding: 8,
-    borderBottom: "1px solid #ccd0da",
+    borderBottom: "1px solid #000000",
     backgroundColor: "#ffffff",
   },
   tableRowAlt: {
     flexDirection: "row",
     padding: 8,
-    borderBottom: "1px solid #ccd0da",
-    backgroundColor: "#e6e9ef",
+    borderBottom: "1px solid #000000",
+    backgroundColor: "#f9f9f9",
   },
   tableHeaderText: {
     fontSize: 9,
@@ -170,10 +170,10 @@ const styles = StyleSheet.create({
   },
   totalsTable: {
     width: 250,
-    backgroundColor: "#e6e9ef",
+    backgroundColor: "#f9f9f9",
     padding: 10,
     borderRadius: 4,
-    border: "1px solid #ccd0da",
+    border: "1px solid #000000",
   },
   totalRow: {
     flexDirection: "row",
@@ -183,33 +183,33 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 9,
-    color: "#6c6f85",
+    color: "#000000",
     fontWeight: "500",
   },
   totalValue: {
     fontSize: 9,
     fontWeight: "bold",
-    color: "#1e66f5",
+    color: "#000000",
   },
   finalTotal: {
     fontSize: 14,
     fontWeight: "bold",
     paddingTop: 8,
     marginTop: 8,
-    color: "#1e66f5",
-    borderTop: "1px solid #1e66f5",
+    color: "#000000",
+    borderTop: "1px solid #000000",
   },
   currencyValue: {
     fontSize: 9,
     fontWeight: "bold",
-    color: "#1e66f5",
+    color: "#000000",
     textAlign: "right",
     fontFamily: "Courier",
   },
   finalCurrencyValue: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#1e66f5",
+    color: "#000000",
     textAlign: "right",
     fontFamily: "Courier",
   },
@@ -236,99 +236,44 @@ const styles = StyleSheet.create({
   footer: {
     marginTop: 15,
     paddingTop: 10,
-    borderTop: "1px solid #1e66f5",
+    borderTop: "1px solid #000000",
     flexDirection: "row",
     justifyContent: "space-between",
   },
   contactInfo: {
     fontSize: 9,
-    color: "#6c6f85",
+    color: "#000000",
     lineHeight: 1.2,
     marginBottom: 10,
     padding: 10,
-    backgroundColor: "#e6e9ef",
+    backgroundColor: "#f9f9f9",
     borderRadius: 4,
-    border: "1px solid #ccd0da",
+    border: "1px solid #000000",
   },
   pageNumber: {
     fontSize: 9,
-    color: "#6c6f85",
+    color: "#666666",
     textAlign: "right",
   },
   notes: {
     marginTop: 10,
     padding: 10,
-    backgroundColor: "#e6e9ef",
+    backgroundColor: "#f9f9f9",
     borderRadius: 4,
-    border: "1px solid #ccd0da",
+    border: "1px solid #000000",
   },
   notesTitle: {
     fontSize: 10,
     fontWeight: "bold",
     marginBottom: 6,
-    color: "#1e66f5",
+    color: "#000000",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   notesText: {
     fontSize: 9,
     lineHeight: 1.2,
-    color: "#6c6f85",
-  },
-  // Status-specific colors
-  statusPaid: {
-    fontSize: 12,
-    color: "#40a02b",
-    backgroundColor: "#e6e9ef",
-    padding: "12px 20px",
-    borderRadius: 4,
-    marginTop: 6,
-    textTransform: "uppercase",
-    fontWeight: "bold",
-    alignSelf: "center",
-    width: "auto",
-    letterSpacing: 1,
-    border: "1px solid #40a02b",
-    flex: 1,
-    textAlign: "center",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statusPending: {
-    fontSize: 12,
-    color: "#df8e1d",
-    backgroundColor: "#e6e9ef",
-    padding: "12px 20px",
-    borderRadius: 4,
-    marginTop: 6,
-    textTransform: "uppercase",
-    fontWeight: "bold",
-    alignSelf: "center",
-    width: "auto",
-    letterSpacing: 1,
-    border: "1px solid #df8e1d",
-    flex: 1,
-    textAlign: "center",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statusOverdue: {
-    fontSize: 12,
-    color: "#d20f39",
-    backgroundColor: "#e6e9ef",
-    padding: "12px 20px",
-    borderRadius: 4,
-    marginTop: 6,
-    textTransform: "uppercase",
-    fontWeight: "bold",
-    alignSelf: "center",
-    width: "auto",
-    letterSpacing: 1,
-    border: "1px solid #d20f39",
-    flex: 1,
-    textAlign: "center",
-    alignItems: "center",
-    justifyContent: "center",
+    color: "#000000",
   },
   statsGrid: {
     flexDirection: "row",
@@ -338,15 +283,15 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#e6e9ef",
+    backgroundColor: "#f9f9f9",
     padding: 10,
     borderRadius: 4,
-    border: "1px solid #ccd0da",
+    border: "1px solid #000000",
     alignItems: "center",
   },
   statLabel: {
     fontSize: 9,
-    color: "#6c6f85",
+    color: "#000000",
     fontWeight: "bold",
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -354,16 +299,16 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 12,
-    color: "#1e66f5",
+    color: "#000000",
     fontWeight: "bold",
   },
 })
 
-interface SimpleInvoicePDFProps {
+interface BlackWhiteInvoicePDFProps {
   invoice: any
 }
 
-export function SimpleInvoicePDF({ invoice }: SimpleInvoicePDFProps) {
+export function BlackWhiteInvoicePDF({ invoice }: BlackWhiteInvoicePDFProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -378,6 +323,7 @@ export function SimpleInvoicePDF({ invoice }: SimpleInvoicePDFProps) {
       day: "numeric",
     })
   }
+
 
   return (
     <Document>
@@ -398,31 +344,26 @@ export function SimpleInvoicePDF({ invoice }: SimpleInvoicePDFProps) {
             {(invoice.company?.address || invoice.company?.city || invoice.company?.state || invoice.company?.country) && (
               <Text style={styles.companyDetails}>
                 {invoice.company?.address && `${invoice.company.address}\n`}
-                {invoice.company?.city && invoice.company?.state
+                {invoice.company?.city && invoice.company?.state 
                   ? `${invoice.company.city}, ${invoice.company.state} ${invoice.company.zipCode || ""}`.trim()
                   : invoice.company?.city || invoice.company?.state || ""
                 }
                 {invoice.company?.country && `\n${invoice.company.country}`}
               </Text>
             )}
-
+            
           </View>
           <View style={styles.invoiceInfo}>
             <Text style={styles.invoiceTitle}>INVOICE</Text>
-            <View style={{
-              alignItems: "center",
+            <View style={{ 
+              alignItems: "center", 
               justifyContent: "center",
               width: "100%",
               minHeight: 40,
               display: "flex"
             }}>
-              {invoice.status && (
-                <Text style={
-                  invoice.status.toLowerCase() === 'paid' ? styles.statusPaid :
-                  invoice.status.toLowerCase() === 'pending' ? styles.statusPending :
-                  invoice.status.toLowerCase() === 'overdue' ? styles.statusOverdue :
-                  styles.statusBadge
-                }>{invoice.status}</Text>
+             {invoice.status && (
+                <Text style={styles.statusBadge}>{invoice.status}</Text>
               )}
             </View>
           </View>
@@ -467,7 +408,7 @@ export function SimpleInvoicePDF({ invoice }: SimpleInvoicePDFProps) {
               {(invoice.client?.address || invoice.client?.city || invoice.client?.state || invoice.client?.country) && (
                 <Text>
                   {invoice.client?.address && `${invoice.client.address}\n`}
-                  {invoice.client?.city && invoice.client?.state
+                  {invoice.client?.city && invoice.client?.state 
                     ? `${invoice.client.city}, ${invoice.client.state} ${invoice.client.zipCode || ""}`.trim()
                     : invoice.client?.city || invoice.client?.state || ""
                   }

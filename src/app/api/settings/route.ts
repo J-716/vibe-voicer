@@ -12,37 +12,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    let settings = await db.settings.findUnique({
-      where: {
-        userId: session.user.id,
-      },
+    // Get user settings
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      include: { settings: true }
     })
 
-    // Create default settings if none exist
-    if (!settings) {
-      settings = await db.settings.create({
-        data: {
-          userId: session.user.id,
-          companyName: "",
-          email: session.user.email,
-          currency: "USD",
-          taxRate: 0,
-        },
-      })
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Map database fields to frontend expected fields, ensuring no null values
-    const mappedSettings = {
-      ...settings,
-      defaultTaxRate: Number(settings.taxRate) || 0,
-      companyEmail: settings.email || "",
-      invoicePrefix: settings.invoicePrefix || "INV",
-      nextInvoiceNumber: settings.nextInvoiceNumber || 1,
-      paymentTerms: settings.paymentTerms || "",
-      logo: settings.logo || "",
-    }
-
-    return NextResponse.json(mappedSettings)
+    return NextResponse.json({
+      personal: {
+        fullName: user.name || "",
+        email: user.email || "",
+        phone: user.settings?.phone || "",
+        address: user.settings?.address || "",
+        city: user.settings?.city || "",
+        state: user.settings?.state || "",
+        zipCode: user.settings?.zipCode || "",
+        country: user.settings?.country || ""
+      },
+      invoice: {
+        taxRate: user.settings?.taxRate || 0,
+        currency: user.settings?.currency || "USD",
+        invoicePrefix: user.settings?.invoicePrefix || "INV",
+        nextInvoiceNumber: user.settings?.nextInvoiceNumber || 1,
+        paymentTerms: user.settings?.paymentTerms || ""
+      }
+    })
   } catch (error) {
     console.error("Error fetching settings:", error)
     return NextResponse.json(
@@ -63,66 +61,68 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const {
-      companyName,
-      companyEmail,
-      defaultTaxRate,
-      currency,
-      invoicePrefix,
-      nextInvoiceNumber,
-      paymentTerms,
-      logo,
-    } = body
+    const { personal, invoice } = body
 
-    // Get existing settings to preserve fields not being updated
-    const existingSettings = await db.settings.findUnique({
-      where: {
-        userId: session.user.id,
-      },
-    })
+    // Update user basic info
+    if (personal) {
+      await db.user.update({
+        where: { id: session.user.id },
+        data: {
+          name: personal.fullName,
+          email: personal.email,
+        }
+      })
 
-    const updateData = {
-      ...(companyName !== undefined && companyName !== null && { companyName }),
-      ...(companyEmail !== undefined && companyEmail !== null && { email: companyEmail }),
-      ...(defaultTaxRate !== undefined && defaultTaxRate !== null && { taxRate: parseFloat(defaultTaxRate) }),
-      ...(currency !== undefined && currency !== null && { currency }),
-      ...(invoicePrefix !== undefined && invoicePrefix !== null && { invoicePrefix }),
-      ...(nextInvoiceNumber !== undefined && nextInvoiceNumber !== null && { nextInvoiceNumber }),
-      ...(paymentTerms !== undefined && paymentTerms !== null && { paymentTerms }),
-      ...(logo !== undefined && logo !== null && { logo }),
+      // Update or create user settings
+      await db.settings.upsert({
+        where: { userId: session.user.id },
+        update: {
+          phone: personal.phone || "",
+          address: personal.address || "",
+          city: personal.city || "",
+          state: personal.state || "",
+          zipCode: personal.zipCode || "",
+          country: personal.country || ""
+        },
+        create: {
+          userId: session.user.id,
+          phone: personal.phone || "",
+          address: personal.address || "",
+          city: personal.city || "",
+          state: personal.state || "",
+          zipCode: personal.zipCode || "",
+          country: personal.country || ""
+        }
+      })
     }
 
-    const settings = await db.settings.upsert({
-      where: {
-        userId: session.user.id,
-      },
-      update: updateData,
-      create: {
-        userId: session.user.id,
-        companyName: companyName || "",
-        email: companyEmail || session.user.email,
-        taxRate: defaultTaxRate ? parseFloat(defaultTaxRate) : 0,
-        currency: currency || "USD",
-        invoicePrefix: invoicePrefix || "INV",
-        nextInvoiceNumber: nextInvoiceNumber || 1,
-        paymentTerms: paymentTerms || "",
-        logo: logo || "",
-      },
-    })
+    // Update invoice settings
+    if (invoice) {
+      await db.settings.upsert({
+        where: { userId: session.user.id },
+        update: {
+          taxRate: invoice.taxRate || 0,
+          currency: invoice.currency || "USD",
+          invoicePrefix: invoice.invoicePrefix || "INV",
+          nextInvoiceNumber: invoice.nextInvoiceNumber || 1,
+          paymentTerms: invoice.paymentTerms || ""
+        },
+        create: {
+          userId: session.user.id,
+          taxRate: invoice.taxRate || 0,
+          currency: invoice.currency || "USD",
+          invoicePrefix: invoice.invoicePrefix || "INV",
+          nextInvoiceNumber: invoice.nextInvoiceNumber || 1,
+          paymentTerms: invoice.paymentTerms || ""
+        }
+      })
+    }
 
-    return NextResponse.json(settings)
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error updating settings:", error)
-    console.error("Error details:", {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : undefined
-    })
     return NextResponse.json(
-      { 
-        error: "Failed to update settings", 
-        details: error instanceof Error ? error.message : 'Unknown error' 
-      },
+      { error: "Failed to update settings" },
       { status: 500 }
     )
   }

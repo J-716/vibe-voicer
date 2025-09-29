@@ -19,6 +19,7 @@ import {
   LogOut,
   User
 } from "lucide-react"
+import { ThemeSelector } from "@/components/theme-selector"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -42,9 +43,9 @@ export function Navigation() {
   }
 
   return (
-    <div className="flex h-16 items-center justify-between border-b bg-white px-6">
+    <div className="flex h-16 items-center justify-between border-b bg-card px-6">
       <div className="flex items-center space-x-8">
-        <Link href="/dashboard" className="text-xl font-bold">
+        <Link href="/dashboard" className="text-xl font-bold text-foreground">
           Vibe Voicer
         </Link>
         <nav className="flex space-x-6">
@@ -57,8 +58,8 @@ export function Navigation() {
                 className={cn(
                   "flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "text-blue-600 bg-blue-50 rounded-md"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                    ? "text-primary bg-primary/10 rounded-md"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -69,6 +70,7 @@ export function Navigation() {
         </nav>
       </div>
       <div className="flex items-center space-x-4">
+        <ThemeSelector />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -84,7 +86,7 @@ export function Navigation() {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleSignOut}
-              className="flex items-center text-red-600"
+              className="flex items-center text-destructive"
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sign out</span>
