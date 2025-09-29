@@ -22,7 +22,7 @@ export function getOAuthProviders(): OAuthProvider[] {
       id: 'google',
       name: 'Google',
       enabled: typeof window !== 'undefined' && 
-        (process.env.NEXT_PUBLIC_GOOGLE_ENABLED === 'true' || 
+        (!!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 
          process.env.NODE_ENV === 'development'),
       icon: '🔍'
     },
@@ -30,7 +30,7 @@ export function getOAuthProviders(): OAuthProvider[] {
       id: 'github',
       name: 'GitHub',
       enabled: typeof window !== 'undefined' && 
-        (process.env.NEXT_PUBLIC_GITHUB_ENABLED === 'true' || 
+        (!!process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || 
          process.env.NODE_ENV === 'development'),
       icon: '🐙'
     }

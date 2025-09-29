@@ -65,9 +65,10 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:3000",
     "https://localhost:3000",
-    process.env.BETTER_AUTH_URL || "http://localhost:3000",
     "https://www.j-designs.org",
     "https://j-designs.org",
+    process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    ...(process.env.TRUSTED_ORIGINS ? process.env.TRUSTED_ORIGINS.split(',') : []),
     ...(process.env.NODE_ENV === "production" ? [process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : ""] : [])
   ].filter(Boolean),
   ...(process.env.NODE_ENV === "development" ? { trustHost: true } : {}),
