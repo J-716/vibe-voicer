@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth"
 import { prismaAdapter } from "better-auth/adapters/prisma"
 import { db } from "./db"
+import { sendEmail, getVerificationEmailTemplate, getPasswordResetEmailTemplate } from "./email"
 
 export const auth = betterAuth({
   database: prismaAdapter(db, {
@@ -8,7 +9,27 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false,
+    requireEmailVerification: false, // Temporarily disable to test signup
+    sendResetPassword: async ({ user, url, token }, request) => {
+      const template = getPasswordResetEmailTemplate(url, user)
+      await sendEmail({
+        to: user.email,
+        subject: template.subject,
+        text: template.text,
+        html: template.html,
+      })
+    },
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url, token }, request) => {
+      const template = getVerificationEmailTemplate(url, user)
+      await sendEmail({
+        to: user.email,
+        subject: template.subject,
+        text: template.text,
+        html: template.html,
+      })
+    },
   },
   socialProviders: {
     google: process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? {

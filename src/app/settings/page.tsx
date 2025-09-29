@@ -41,6 +41,17 @@ export default function SettingsPage() {
   const [showApiKey, setShowApiKey] = useState(false)
   const [activeTab, setActiveTab] = useState("company")
   
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  })
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  
   // Personal settings state
   const [personalSettings, setPersonalSettings] = useState({
     fullName: "",
@@ -213,6 +224,56 @@ export default function SettingsPage() {
     }
   }
 
+  // Handle password change
+  const handleChangePassword = async () => {
+    try {
+      setIsChangingPassword(true)
+      
+      // Validate passwords match
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        toast.error("New passwords don't match")
+        return
+      }
+      
+      if (passwordData.newPassword.length < 8) {
+        toast.error("New password must be at least 8 characters long")
+        return
+      }
+
+      const response = await fetch("/api/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+          revokeOtherSessions: true
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to change password")
+      }
+
+      toast.success("Password changed successfully!")
+      
+      // Clear password fields
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      })
+    } catch (error) {
+      console.error("Error changing password:", error)
+      toast.error("Failed to change password")
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
+
   return (
     <ProtectedLayout>
       {/* Hero Section */}
@@ -250,7 +311,7 @@ export default function SettingsPage() {
                   Jump into the settings you need most
                 </p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
                 <Card 
                   className={`border-l-4 border-l-[var(--mauve)] hover:shadow-xl hover:shadow-[var(--mauve)]/20 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer group h-full ${
                     activeTab === "company" 
@@ -290,20 +351,20 @@ export default function SettingsPage() {
                 </Card>
                   
                 <Card 
-                  className={`border-l-4 border-l-[var(--green)] hover:shadow-xl hover:shadow-[var(--green)]/20 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer group h-full ${
-                    activeTab === "account" 
-                      ? "shadow-xl shadow-[var(--green)]/20 -translate-y-2 scale-[1.02]" 
+                  className={`border-l-4 border-l-[var(--peach)] hover:shadow-xl hover:shadow-[var(--peach)]/20 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer group h-full ${
+                    activeTab === "password" 
+                      ? "shadow-xl shadow-[var(--peach)]/20 -translate-y-2 scale-[1.02]" 
                       : ""
                   }`}
-                  onClick={() => setActiveTab("account")}
+                  onClick={() => setActiveTab("password")}
                 >
                   <CardHeader className="text-center pb-4 h-full flex flex-col justify-center items-center min-h-[200px]">
-                    <div className="p-4 rounded-xl bg-[var(--green)]/10 w-fit mx-auto mb-4 group-hover:bg-[var(--green)]/20 group-hover:scale-110 transition-all duration-300">
-                      <SettingsIcon className="h-8 w-8 text-[var(--green)] group-hover:rotate-12 transition-transform duration-300" />
+                    <div className="p-4 rounded-xl bg-[var(--peach)]/10 w-fit mx-auto mb-4 group-hover:bg-[var(--peach)]/20 group-hover:scale-110 transition-all duration-300">
+                      <Lock className="h-8 w-8 text-[var(--peach)] group-hover:rotate-12 transition-transform duration-300" />
                     </div>
                     <CardTitle className="text-xl mb-2 text-center">Account</CardTitle>
                     <CardDescription className="text-base text-center">
-                      Manage your account and security settings
+                      Change your password and security settings
                     </CardDescription>
                   </CardHeader>
                 </Card>
@@ -468,85 +529,121 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="account">
-            <Card className="border-l-4 border-l-[var(--green)] shadow-lg">
+          <TabsContent value="password">
+            <Card className="border-l-4 border-l-[var(--peach)] shadow-lg">
               <CardHeader className="text-center pb-6">
-                <div className="p-3 rounded-xl bg-[var(--green)]/10 w-fit mx-auto mb-4">
-                  <Shield className="h-8 w-8 text-[var(--green)]" />
+                <div className="p-3 rounded-xl bg-[var(--peach)]/10 w-fit mx-auto mb-4">
+                  <Lock className="h-8 w-8 text-[var(--peach)]" />
                 </div>
                 <CardTitle className="text-2xl font-bold">
-                  Account & Security
+                Account & Security
                 </CardTitle>
                 <CardDescription className="text-lg">
-                  Manage your account security and preferences
+                  Update your password to keep your account secure
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-8">
                 <div className="max-w-2xl mx-auto space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="currentPassword" className="text-sm font-medium text-foreground text-center block">
+                    <Label htmlFor="currentPasswordChange" className="text-sm font-medium text-foreground text-center block">
                       Current Password
                     </Label>
                     <div className="relative max-w-md mx-auto">
                       <Input
-                        id="currentPassword"
-                        type={showPassword ? "text" : "password"}
+                        id="currentPasswordChange"
+                        type={showCurrentPassword ? "text" : "password"}
                         placeholder="Enter your current password"
-                        value={accountSettings.currentPassword}
-                        onChange={(e) => setAccountSettings(prev => ({ ...prev, currentPassword: e.target.value }))}
-                        className="h-10 border-2 rounded-lg text-sm bg-background/50 backdrop-blur-sm border-[var(--red)]/20 focus:border-[var(--red)] focus:ring-2 focus:ring-[var(--red)]/20 transition-all duration-200 pr-10"
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                        className="h-10 border-2 rounded-lg text-sm bg-background/50 backdrop-blur-sm border-[var(--peach)]/20 focus:border-[var(--peach)] focus:ring-2 focus:ring-[var(--peach)]/20 transition-all duration-200 pr-10"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-[var(--red)]/10"
-                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-[var(--peach)]/10"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                       >
-                        {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        {showCurrentPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                       </Button>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="newPassword" className="text-sm font-medium text-foreground text-center block">
+                      <Label htmlFor="newPasswordChange" className="text-sm font-medium text-foreground text-center block">
                         New Password
                       </Label>
-                      <Input
-                        id="newPassword"
-                        type="password"
-                        placeholder="Enter your new password"
-                        value={accountSettings.newPassword}
-                        onChange={(e) => setAccountSettings(prev => ({ ...prev, newPassword: e.target.value }))}
-                        className="h-10 border-2 rounded-lg text-sm bg-background/50 backdrop-blur-sm border-[var(--green)]/20 focus:border-[var(--green)] focus:ring-2 focus:ring-[var(--green)]/20 transition-all duration-200"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="newPasswordChange"
+                          type={showNewPassword ? "text" : "password"}
+                          placeholder="Enter your new password"
+                          value={passwordData.newPassword}
+                          onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                          className="h-10 border-2 rounded-lg text-sm bg-background/50 backdrop-blur-sm border-[var(--peach)]/20 focus:border-[var(--peach)] focus:ring-2 focus:ring-[var(--peach)]/20 transition-all duration-200 pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-[var(--peach)]/10"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                        >
+                          {showNewPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground text-center block">
+                      <Label htmlFor="confirmPasswordChange" className="text-sm font-medium text-foreground text-center block">
                         Confirm New Password
                       </Label>
-                      <Input
-                        id="confirmPassword"
-                        type="password"
-                        placeholder="Confirm your new password"
-                        value={accountSettings.confirmPassword}
-                        onChange={(e) => setAccountSettings(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        className="h-10 border-2 rounded-lg text-sm bg-background/50 backdrop-blur-sm border-[var(--blue)]/20 focus:border-[var(--blue)] focus:ring-2 focus:ring-[var(--blue)]/20 transition-all duration-200"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="confirmPasswordChange"
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm your new password"
+                          value={passwordData.confirmPassword}
+                          onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                          className="h-10 border-2 rounded-lg text-sm bg-background/50 backdrop-blur-sm border-[var(--peach)]/20 focus:border-[var(--peach)] focus:ring-2 focus:ring-[var(--peach)]/20 transition-all duration-200 pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-[var(--peach)]/10"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[var(--peach)]/5 border border-[var(--peach)]/20 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <Shield className="h-5 w-5 text-[var(--peach)] mt-0.5 flex-shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-medium text-foreground mb-1">Password Requirements:</p>
+                        <ul className="text-muted-foreground space-y-1">
+                          <li>• At least 8 characters long</li>
+                          <li>• Mix of letters, numbers, and symbols recommended</li>
+                          <li>• Avoid common passwords or personal information</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex justify-center pt-8">
                   <Button 
-                    onClick={handleSaveAccountSettings}
-                    disabled={isSavingAccount}
-                    className="bg-[var(--green)] hover:bg-[var(--green)]/90"
+                    onClick={handleChangePassword}
+                    disabled={isChangingPassword}
+                    className="bg-[var(--peach)] hover:bg-[var(--peach)]/90"
                   >
                     <Save className="h-6 w-6 mr-3" />
-                    {isSavingAccount ? "Saving..." : "Save Account Settings"}
+                    {isChangingPassword ? "Changing Password..." : "Change Password"}
                   </Button>
                 </div>
               </CardContent>

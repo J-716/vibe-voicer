@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,13 @@ export default function RegisterPage() {
   const [name, setName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isOAuthSignUp, setIsOAuthSignUp] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const router = useRouter()
+
+  // Handle hydration
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,13 +47,35 @@ export default function RegisterPage() {
       })
       if (error) {
         console.error("Sign up error:", error)
-        throw error
+        // Extract the actual error message from the response
+        let errorMessage = "An error occurred during sign up"
+        
+        if (error.message) {
+          errorMessage = error.message
+        } else if (error.statusText) {
+          errorMessage = error.statusText
+        } else if (error.code) {
+          errorMessage = `Error: ${error.code}`
+        } else if (typeof error === 'object' && Object.keys(error).length === 0) {
+          errorMessage = "Email service error. Account created but verification email failed to send."
+        }
+        
+        throw new Error(errorMessage)
       }
       toast.success("Account created successfully!")
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Auth error:", error)
-      toast.error(error.message || "An error occurred")
+      // Handle different types of errors
+      let errorMessage = "An error occurred"
+      if (error.message) {
+        errorMessage = error.message
+      } else if (error.statusText) {
+        errorMessage = error.statusText
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      }
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -86,9 +114,9 @@ export default function RegisterPage() {
     }
   }
 
-  // Get enabled OAuth providers
-  const oauthProviders = getEnabledOAuthProviders()
-  const hasOAuthProviders = oauthProviders.length > 0
+  // Get enabled OAuth providers (only after mounting to prevent hydration mismatch)
+  const oauthProviders = isMounted ? getEnabledOAuthProviders() : []
+  const hasOAuthProviders = isMounted && oauthProviders.length > 0
 
   return (
     <div className="min-h-screen bg-background">
