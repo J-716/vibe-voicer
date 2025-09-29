@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -19,7 +19,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const router = useRouter()
+
+  // Handle hydration
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,9 +72,9 @@ export default function LoginPage() {
     }
   }
 
-  // Get enabled OAuth providers
-  const oauthProviders = getEnabledOAuthProviders()
-  const hasOAuthProviders = oauthProviders.length > 0
+  // Get enabled OAuth providers (only after mounting to prevent hydration mismatch)
+  const oauthProviders = isMounted ? getEnabledOAuthProviders() : []
+  const hasOAuthProviders = isMounted && oauthProviders.length > 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -166,6 +172,15 @@ export default function LoginPage() {
                     )}
                   </Button>
                 </form>
+
+                <div className="text-center text-sm mt-4">
+                  <Link 
+                    href="/forgot-password" 
+                    className="text-[var(--blue)] hover:text-[var(--blue)]/80 font-medium"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
 
                 {hasOAuthProviders && (
                   <>
