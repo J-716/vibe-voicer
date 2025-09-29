@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       body: {
         token
       }
-    })
+    } as any)
 
     return NextResponse.json({ 
       success: true, 
