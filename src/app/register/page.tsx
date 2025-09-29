@@ -65,7 +65,8 @@ export default function RegisterPage() {
         throw new Error(errorMessage)
       }
       toast.success("Account created successfully!")
-      router.push("/dashboard")
+      // Redirect to check-email page with email parameter
+      router.push(`/check-email?email=${encodeURIComponent(email)}`)
     } catch (error: any) {
       console.error("Auth error:", error)
       // Handle different types of errors

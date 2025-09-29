@@ -39,6 +39,7 @@ export function getOAuthProviders(): OAuthProvider[] {
   return providers.filter(provider => provider.enabled)
 }
 
+
 /**
  * Get the enabled OAuth providers for display in UI
  */
