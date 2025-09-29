@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { ThemeSelector } from "@/components/theme-selector"
 import { Footer } from "@/components/footer"
 import { PublicNavigation } from "@/components/public-navigation"
+import { getEnabledOAuthProviders } from "@/lib/oauth-config"
 import { FileText, Users, DollarSign, CheckCircle, ArrowRight, Mail, Lock, Sparkles, LogIn } from "lucide-react"
 
 export default function LoginPage() {
@@ -50,20 +51,24 @@ export default function LoginPage() {
         provider,
         callbackURL: "/dashboard",
       })
-      if (error) throw error
+      if (error) {
+        console.error(`${provider} login error:`, error)
+        throw error
+      }
+      // Success - user will be redirected automatically
+      toast.success(`Signed in with ${provider} successfully!`)
     } catch (error: any) {
-      toast.error(error.message || "An error occurred")
+      console.error(`${provider} auth error:`, error)
+      const errorMessage = error.message || `Failed to sign in with ${provider}. Please try again.`
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Check if social providers are configured
-  // For client-side, we need to check if the buttons should be shown
-  // Since we can't access server env vars on client, we'll show them by default
-  // and let the server handle the actual OAuth configuration
-  const hasGoogle = true // Show Google button - server will handle if not configured
-  const hasGithub = true // Show GitHub button - server will handle if not configured
+  // Get enabled OAuth providers
+  const oauthProviders = getEnabledOAuthProviders()
+  const hasOAuthProviders = oauthProviders.length > 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -162,7 +167,7 @@ export default function LoginPage() {
                   </Button>
                 </form>
 
-                {(hasGoogle || hasGithub) && (
+                {hasOAuthProviders && (
                   <>
                     <div className="relative my-6">
                       <div className="absolute inset-0 flex items-center">
@@ -173,27 +178,22 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      {hasGoogle && (
+                    <div className={`grid gap-3 ${oauthProviders.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                      {oauthProviders.map((provider) => (
                         <Button
+                          key={provider.id}
                           variant="outline"
-                          onClick={() => handleSocialLogin("google")}
+                          onClick={() => handleSocialLogin(provider.id)}
                           disabled={isLoading}
-                          className="h-12 border-2 border-border hover:border-[var(--red)]/50 hover:text-[var(--red)] hover:bg-gradient-to-r hover:from-[var(--red)]/10 hover:to-[var(--red)]/5 transition-all duration-300 shadow-sm hover:shadow-md"
+                          className={`h-12 border-2 border-border transition-all duration-300 shadow-sm hover:shadow-md ${
+                            provider.id === 'google' 
+                              ? 'hover:border-[var(--red)]/50 hover:text-[var(--red)] hover:bg-gradient-to-r hover:from-[var(--red)]/10 hover:to-[var(--red)]/5'
+                              : 'hover:border-[var(--mauve)]/50 hover:text-[var(--mauve)] hover:bg-gradient-to-r hover:from-[var(--mauve)]/10 hover:to-[var(--mauve)]/5'
+                          }`}
                         >
-                          Google
+                          {provider.name}
                         </Button>
-                      )}
-                      {hasGithub && (
-                        <Button
-                          variant="outline"
-                          onClick={() => handleSocialLogin("github")}
-                          disabled={isLoading}
-                          className="h-12 border-2 border-border hover:border-[var(--mauve)]/50 hover:text-[var(--mauve)] hover:bg-gradient-to-r hover:from-[var(--mauve)]/10 hover:to-[var(--mauve)]/5 transition-all duration-300 shadow-sm hover:shadow-md"
-                        >
-                          GitHub
-                        </Button>
-                      )}
+                      ))}
                     </div>
                   </>
                 )}

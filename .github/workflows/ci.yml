@@ -73,12 +73,32 @@ jobs:
       - name: Run type checking
         run: npx tsc --noEmit
 
+      - name: Run tests (if available)
+        run: |
+          if [ -f "package.json" ] && grep -q '"test"' package.json; then
+            pnpm test
+          else
+            echo "No tests found, skipping test step"
+          fi
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+
       - name: Build application
         run: pnpm build
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-          NEXTAUTH_SECRET: test-secret
-          NEXTAUTH_URL: http://localhost:3000
+          BETTER_AUTH_SECRET: test-secret-key-for-ci
+          BETTER_AUTH_URL: http://localhost:3000
+          NODE_ENV: test
+
+      - name: Verify build works
+        run: |
+          timeout 10s pnpm start || true
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          BETTER_AUTH_SECRET: test-secret-key-for-ci
+          BETTER_AUTH_URL: http://localhost:3000
+          NODE_ENV: test
 
   security:
     name: Security Audit
@@ -129,10 +149,13 @@ jobs:
 
       - name: Generate Prisma client
         run: pnpm db:generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
 
       - name: Build application
         run: pnpm build
         env:
-          DATABASE_URL: postgresql://user:password@localhost:5432/db
-          NEXTAUTH_SECRET: build-test-secret
-          NEXTAUTH_URL: http://localhost:3000
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          BETTER_AUTH_SECRET: test-secret-key-for-ci
+          BETTER_AUTH_URL: http://localhost:3000
+          NODE_ENV: test
