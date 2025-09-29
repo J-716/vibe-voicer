@@ -22,6 +22,8 @@ Add these variables:
 ```
 BETTER_AUTH_URL=https://www.j-designs.org
 TRUSTED_ORIGINS=http://localhost:3000,https://localhost:3000,https://www.j-designs.org,https://j-designs.org
+SMTP_FROM=noreply@vibevoicer.com
+RESEND_API_KEY=re_your_resend_api_key_here
 ```
 
 ### 3. Redeploy

@@ -17,8 +17,11 @@ export const sendEmail = async ({ to, subject, text, html }: EmailOptions) => {
       throw new Error('Email service not configured. Please contact support.')
     }
 
+    // Use a proper fallback for the from field
+    const fromEmail = process.env.SMTP_FROM || 'noreply@vibevoicer.com'
+    
     const { data, error } = await resend.emails.send({
-      from: process.env.SMTP_FROM || 'onboarding@resend.dev',
+      from: fromEmail,
       to: [to],
       subject,
       text,
@@ -27,6 +30,7 @@ export const sendEmail = async ({ to, subject, text, html }: EmailOptions) => {
 
     if (error) {
       console.error('Resend error:', error)
+      console.error('From email used:', fromEmail)
       throw new Error(`Email service error: ${error.message}`)
     }
 

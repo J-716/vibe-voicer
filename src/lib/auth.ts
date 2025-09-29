@@ -9,7 +9,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: process.env.RESEND_API_KEY ? true : false, // Only require verification if Resend is configured
+    requireEmailVerification: process.env.RESEND_API_KEY && process.env.SMTP_FROM ? true : false, // Only require verification if both Resend and SMTP_FROM are configured
     sendResetPassword: async ({ user, url, token }, request) => {
       const template = getPasswordResetEmailTemplate(url, user)
       await sendEmail({
