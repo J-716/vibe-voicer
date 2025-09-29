@@ -9,7 +9,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Temporarily disable to test signup
+    requireEmailVerification: true, // Re-enable email verification with Resend
     sendResetPassword: async ({ user, url, token }, request) => {
       const template = getPasswordResetEmailTemplate(url, user)
       await sendEmail({
