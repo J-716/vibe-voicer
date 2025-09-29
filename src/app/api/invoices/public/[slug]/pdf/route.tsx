@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { renderToBuffer } from "@react-pdf/renderer"
-import React from "react"
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer"
+import { BlackWhiteInvoicePDF } from "@/components/black-white-invoice-pdf"
+import { SimpleInvoicePDF } from "@/components/simple-invoice-pdf"
 
 export async function GET(
   request: NextRequest,
@@ -10,6 +10,8 @@ export async function GET(
 ) {
   try {
     const { slug } = await params
+    const { searchParams } = new URL(request.url)
+    const style = searchParams.get('style') || 'bw' // Default to black and white
     const invoice = await db.invoice.findUnique({
       where: {
         publicSlug: slug,
@@ -39,147 +41,45 @@ export async function GET(
       total: invoice.total
     })
 
-    // Calculate item totals if they're missing and ensure all required fields exist
+    // Convert Decimal fields to numbers for JSON serialization and map user settings to company
     const processedInvoice = {
       ...invoice,
-      logo: null, // No logo for now
-      user: {
+      subtotal: Number(invoice.subtotal),
+      discountValue: Number(invoice.discountValue),
+      discountAmount: Number(invoice.discountAmount),
+      taxRate: Number(invoice.taxRate),
+      taxAmount: Number(invoice.taxAmount),
+      total: Number(invoice.total),
+      company: {
         name: invoice.user?.name || "Your Company",
-        email: invoice.user?.email || "your@email.com",
-        phone: "(555) 123-4567", // Default phone
+        email: invoice.user?.email || "",
+        phone: "",
+        address: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "",
       },
       items: invoice.items?.map(item => ({
         ...item,
-        total: item.total || (Number(item.quantity) * Number(item.unitPrice))
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+        total: Number(item.total),
       })) || [],
-      client: {
-        name: invoice.client?.name || "Client Name",
-        email: invoice.client?.email || "",
-        company: "", // No company field in client
-      },
-      // Ensure all required fields exist
-      subtotal: Number(invoice.subtotal) || 0,
-      total: Number(invoice.total) || 0,
-      taxAmount: Number(invoice.taxAmount) || 0,
-      taxRate: Number(invoice.taxRate) || 0,
-      discountAmount: Number(invoice.discountAmount) || 0,
-      discountType: invoice.discountType || "PERCENTAGE",
-      discountValue: Number(invoice.discountValue) || 0,
-      paymentTerms: invoice.paymentTerms || "",
-      notes: invoice.notes || "",
-      issueDate: invoice.issueDate || new Date().toISOString(),
-      dueDate: invoice.dueDate || new Date().toISOString()
+      payments: invoice.payments?.map(payment => ({
+        ...payment,
+        amount: Number(payment.amount),
+      })) || [],
     }
 
     let buffer: Buffer
     try {
       console.log("Starting PDF generation for public invoice:", invoice.id)
       
-      // Create PDF using React PDF API directly
-      const styles = StyleSheet.create({
-        page: {
-          flexDirection: 'column',
-          backgroundColor: '#FFFFFF',
-          padding: 30,
-          fontFamily: 'Helvetica',
-        },
-        header: {
-          fontSize: 24,
-          fontWeight: 'bold',
-          marginBottom: 20,
-          color: '#1e40af',
-        },
-        section: {
-          marginBottom: 15,
-        },
-        label: {
-          fontSize: 12,
-          fontWeight: 'bold',
-          color: '#374151',
-        },
-        value: {
-          fontSize: 10,
-          color: '#6b7280',
-          marginBottom: 5,
-        },
-        table: {
-          marginTop: 20,
-        },
-        tableRow: {
-          flexDirection: 'row',
-          borderBottomWidth: 1,
-          borderBottomColor: '#e5e7eb',
-          paddingVertical: 8,
-        },
-        tableHeader: {
-          backgroundColor: '#f3f4f6',
-          fontWeight: 'bold',
-        },
-        tableCell: {
-          flex: 1,
-          fontSize: 10,
-        },
-        total: {
-          fontSize: 14,
-          fontWeight: 'bold',
-          color: '#1e40af',
-          marginTop: 10,
-        }
-      })
-
-      // Create items table rows
-      const itemRows = (invoice.items || []).map((item: any, index: number) =>
-        React.createElement(View, { key: index, style: styles.tableRow },
-          React.createElement(Text, { style: styles.tableCell }, item.description || ''),
-          React.createElement(Text, { style: styles.tableCell }, String(item.quantity || 0)),
-          React.createElement(Text, { style: styles.tableCell }, `$${Number(item.unitPrice) || 0}`),
-          React.createElement(Text, { style: styles.tableCell }, `$${Number(item.total) || (Number(item.quantity) * Number(item.unitPrice)) || 0}`)
-        )
-      )
-
-      const pdfDoc = React.createElement(Document, {},
-        React.createElement(Page, { size: "A4", style: styles.page },
-          // Header
-          React.createElement(Text, { style: styles.header }, 'INVOICE'),
-          
-          // Invoice Details
-          React.createElement(View, { style: styles.section },
-            React.createElement(Text, { style: styles.label }, 'Invoice Number:'),
-            React.createElement(Text, { style: styles.value }, invoice.invoiceNumber),
-            React.createElement(Text, { style: styles.label }, 'Issue Date:'),
-            React.createElement(Text, { style: styles.value }, new Date(invoice.issueDate).toLocaleDateString()),
-            React.createElement(Text, { style: styles.label }, 'Due Date:'),
-            React.createElement(Text, { style: styles.value }, new Date(invoice.dueDate).toLocaleDateString())
-          ),
-          
-          // Client Details
-          React.createElement(View, { style: styles.section },
-            React.createElement(Text, { style: styles.label }, 'Bill To:'),
-            React.createElement(Text, { style: styles.value }, invoice.client?.name || 'N/A'),
-            React.createElement(Text, { style: styles.value }, invoice.client?.email || ''),
-            React.createElement(Text, { style: styles.value }, invoice.client?.address || ''),
-            React.createElement(Text, { style: styles.value }, `${invoice.client?.city || ''}, ${invoice.client?.state || ''} ${invoice.client?.zipCode || ''}`)
-          ),
-          
-          // Items Table
-          React.createElement(View, { style: styles.table },
-            React.createElement(View, { style: [styles.tableRow, styles.tableHeader] },
-              React.createElement(Text, { style: styles.tableCell }, 'Description'),
-              React.createElement(Text, { style: styles.tableCell }, 'Qty'),
-              React.createElement(Text, { style: styles.tableCell }, 'Unit Price'),
-              React.createElement(Text, { style: styles.tableCell }, 'Total')
-            ),
-            ...itemRows
-          ),
-          
-          // Totals
-          React.createElement(View, { style: { marginTop: 20, alignItems: 'flex-end' } },
-            React.createElement(Text, { style: styles.total }, `Subtotal: $${Number(invoice.subtotal) || 0}`),
-            Number(invoice.taxAmount) > 0 && React.createElement(Text, { style: styles.value }, `Tax (${Number(invoice.taxRate)}%): $${Number(invoice.taxAmount)}`),
-            React.createElement(Text, { style: styles.total }, `Total: $${Number(invoice.total) || 0}`)
-          )
-        )
-      )
+      // Use the appropriate PDF component based on style parameter
+      const pdfDoc = style === 'bw' 
+        ? BlackWhiteInvoicePDF({ invoice: processedInvoice })
+        : SimpleInvoicePDF({ invoice: processedInvoice })
       
       buffer = await renderToBuffer(pdfDoc)
       console.log("PDF generated successfully, buffer size:", buffer.length)

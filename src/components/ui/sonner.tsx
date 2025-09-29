@@ -16,17 +16,17 @@ const Toaster = ({ ...props }: ToasterProps) => {
       expand={true}
       duration={4000}
       toastOptions={{
-        style: {
-          background: 'hsl(0, 0%, 100%)',
-          color: 'hsl(0, 0%, 9%)',
-          border: '1px solid hsl(0, 0%, 90%)',
-        },
         classNames: {
-          toast: "group toast group-[.toaster]:bg-white group-[.toaster]:text-gray-900 group-[.toaster]:border-gray-200 group-[.toaster]:shadow-lg group-[.toaster]:backdrop-blur-sm",
-          description: "group-[.toast]:text-gray-600 group-[.toast]:text-sm group-[.toast]:opacity-90",
-          actionButton: "group-[.toast]:bg-gray-100 group-[.toast]:hover:bg-gray-200 group-[.toast]:text-gray-900 group-[.toast]:font-medium group-[.toast]:px-3 group-[.toast]:py-1.5 group-[.toast]:rounded-md group-[.toast]:transition-colors",
-          cancelButton: "group-[.toast]:bg-gray-50 group-[.toast]:hover:bg-gray-100 group-[.toast]:text-gray-700 group-[.toast]:font-medium group-[.toast]:px-3 group-[.toast]:py-1.5 group-[.toast]:rounded-md group-[.toast]:transition-colors",
-          closeButton: "group-[.toast]:opacity-70 group-[.toast]:hover:opacity-100 group-[.toast]:transition-opacity",
+          toast: "group toast group-[.toaster]:bg-card group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg group-[.toaster]:backdrop-blur-md group-[.toaster]:rounded-xl group-[.toaster]:border group-[.toaster]:p-4",
+          description: "group-[.toast]:text-muted-foreground group-[.toast]:text-sm group-[.toast]:opacity-90 group-[.toast]:mt-1",
+          actionButton: "group-[.toast]:bg-[var(--blue)] group-[.toast]:hover:bg-[var(--blue)]/90 group-[.toast]:text-white group-[.toast]:font-medium group-[.toast]:px-4 group-[.toast]:py-2 group-[.toast]:rounded-lg group-[.toast]:transition-all group-[.toast]:duration-200 group-[.toast]:shadow-sm group-[.toast]:hover:shadow-md",
+          cancelButton: "group-[.toast]:bg-muted group-[.toast]:hover:bg-muted/80 group-[.toast]:text-muted-foreground group-[.toast]:font-medium group-[.toast]:px-4 group-[.toast]:py-2 group-[.toast]:rounded-lg group-[.toast]:transition-all group-[.toast]:duration-200 group-[.toast]:border group-[.toast]:border-border",
+          closeButton: "group-[.toast]:opacity-70 group-[.toast]:hover:opacity-100 group-[.toast]:transition-opacity group-[.toast]:hover:bg-muted/50 group-[.toast]:rounded-md group-[.toast]:p-1",
+          title: "group-[.toast]:text-foreground group-[.toast]:font-semibold group-[.toast]:text-base group-[.toast]:mb-1",
+          success: "group-[.toast]:border-l-4 group-[.toast]:border-l-[var(--green)] group-[.toast]:bg-[var(--green)]/5",
+          error: "group-[.toast]:border-l-4 group-[.toast]:border-l-[var(--red)] group-[.toast]:bg-[var(--red)]/5",
+          warning: "group-[.toast]:border-l-4 group-[.toast]:border-l-[var(--yellow)] group-[.toast]:bg-[var(--yellow)]/5",
+          info: "group-[.toast]:border-l-4 group-[.toast]:border-l-[var(--sky)] group-[.toast]:bg-[var(--sky)]/5",
         },
       }}
       {...props}

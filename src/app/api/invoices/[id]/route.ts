@@ -16,6 +16,9 @@ export async function GET(
     }
 
     const { id } = await params
+    console.log("Fetching invoice with ID:", id)
+    console.log("User ID:", session.user.id)
+    
     const invoice = await db.invoice.findFirst({
       where: {
         id,
@@ -29,6 +32,13 @@ export async function GET(
     })
 
     if (!invoice) {
+      console.log("Invoice not found for ID:", id, "and user:", session.user.id)
+      // Check if invoice exists at all (for debugging)
+      const anyInvoice = await db.invoice.findFirst({
+        where: { id },
+        select: { id: true, userId: true, invoiceNumber: true }
+      })
+      console.log("Any invoice with this ID:", anyInvoice)
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
     }
 
@@ -91,6 +101,7 @@ export async function PUT(
       total,
       notes,
       items,
+      originalItems,
     } = body
 
     // Check if invoice exists and user has access
@@ -129,22 +140,31 @@ export async function PUT(
     })
 
     // Update items if provided
-    if (items) {
-      // Delete existing items
-      await db.invoiceItem.deleteMany({
-        where: { invoiceId: id },
-      })
+    if (items || originalItems) {
+      // Update original items (description only)
+      if (originalItems && originalItems.length > 0) {
+        for (const item of originalItems) {
+          await db.invoiceItem.update({
+            where: { id: item.id },
+            data: {
+              description: item.description,
+            },
+          })
+        }
+      }
 
-      // Create new items
-      await db.invoiceItem.createMany({
-        data: items.map((item: any) => ({
-          invoiceId: id,
-          description: item.description,
-          quantity: parseFloat(item.quantity) || 1,
-          unitPrice: parseFloat(item.unitPrice) || 0,
-          total: parseFloat(item.total) || 0,
-        })),
-      })
+      // Add new items
+      if (items && items.length > 0) {
+        await db.invoiceItem.createMany({
+          data: items.map((item: any) => ({
+            invoiceId: id,
+            description: item.description,
+            quantity: parseFloat(item.quantity) || 1,
+            unitPrice: parseFloat(item.unitPrice) || 0,
+            total: parseFloat(item.quantity) * parseFloat(item.unitPrice) || 0,
+          })),
+        })
+      }
     }
 
     return NextResponse.json(invoice)

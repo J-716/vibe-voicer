@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Edit, ArrowLeft, Mail, Phone, MapPin, FileText, Plus, Building2, DollarSign, Calendar, BarChart3, Activity } from "lucide-react"
+import { Edit, ArrowLeft, Mail, Phone, MapPin, FileText, Plus, Building2, DollarSign, Calendar, BarChart3, Activity, Clock } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useState, useEffect } from "react"
@@ -32,7 +32,13 @@ interface ClientInvoice {
   invoiceNumber: string
   issueDate: string
   dueDate: string
-  amount: number
+  subtotal: number
+  discountType: string
+  discountValue: number
+  discountAmount: number
+  taxRate: number
+  taxAmount: number
+  total: number
   status: string
 }
 
@@ -89,8 +95,8 @@ export default function ClientDetailPage() {
       <ProtectedLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Client not found</h1>
-            <p className="text-gray-600 mb-4">The client you're looking for doesn't exist.</p>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Client not found</h1>
+            <p className="text-muted-foreground mb-4">The client you're looking for doesn't exist.</p>
             <Button asChild>
               <Link href="/clients">Back to Clients</Link>
             </Button>
@@ -113,18 +119,12 @@ export default function ClientDetailPage() {
                 </Link>
               </Button>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{client.name}</h1>
-                <p className="text-gray-600">Client details and invoice history</p>
+                <h1 className="text-3xl font-bold text-foreground">{client.name}</h1>
+                <p className="text-muted-foreground">Client details and invoice history</p>
               </div>
             </div>
             <div className="flex space-x-2">
-              <Button variant="outline" asChild className="hover:bg-gray-50">
-                <Link href={`/clients/${clientId}/edit`}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Link>
-              </Button>
-              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+              <Button asChild>
                 <Link href="/invoices/new">
                   <Plus className="h-4 w-4 mr-2" />
                   New Invoice
@@ -138,10 +138,10 @@ export default function ClientDetailPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex flex-col items-center text-center space-y-2">
-                  <FileText className="h-6 w-6 text-blue-600" />
+                  <FileText className="h-6 w-6 text-primary" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Invoices</p>
-                    <p className="text-lg font-bold text-gray-900">{client.invoiceCount}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Total Invoices</p>
+                    <p className="text-lg font-bold text-foreground">{client.invoiceCount}</p>
                   </div>
                 </div>
               </CardContent>
@@ -151,8 +151,8 @@ export default function ClientDetailPage() {
                 <div className="flex flex-col items-center text-center space-y-2">
                   <DollarSign className="h-6 w-6 text-emerald-600" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Value</p>
-                    <p className="text-lg font-bold text-gray-900">${client.totalValue.toLocaleString()}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Total Value</p>
+                    <p className="text-lg font-bold text-foreground">${client.totalValue.toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -160,10 +160,10 @@ export default function ClientDetailPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex flex-col items-center text-center space-y-2">
-                  <Activity className="h-6 w-6 text-green-600" />
+                  <Activity className="h-6 w-6 text-success" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Paid</p>
-                    <p className="text-lg font-bold text-gray-900">${client.paidValue.toLocaleString()}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Paid</p>
+                    <p className="text-lg font-bold text-foreground">${client.paidValue.toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -171,10 +171,10 @@ export default function ClientDetailPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex flex-col items-center text-center space-y-2">
-                  <Calendar className="h-6 w-6 text-orange-600" />
+                  <Clock className="h-6 w-6 text-warning" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Pending</p>
-                    <p className="text-lg font-bold text-gray-900">${client.pendingValue.toLocaleString()}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                    <p className="text-lg font-bold text-foreground">${client.pendingValue.toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -188,37 +188,37 @@ export default function ClientDetailPage() {
             <CardHeader>
               <CardTitle className="flex flex-col items-center text-center space-y-2">
                 <div className="flex items-center space-x-2">
-                  <Building2 className="h-5 w-5 text-blue-600" />
+                  <Building2 className="h-5 w-5 text-primary" />
                   <span>Contact Information</span>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Mail className="h-4 w-4 text-blue-600" />
+              <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Mail className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Email</p>
-                  <p className="text-sm text-gray-600">{client.email || "Not provided"}</p>
+                  <p className="text-sm font-medium text-foreground">Email</p>
+                  <p className="text-sm text-muted-foreground">{client.email || "Not provided"}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Phone className="h-4 w-4 text-green-600" />
+              <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
+                <div className="p-2 bg-success/10 rounded-lg">
+                  <Phone className="h-4 w-4 text-success" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Phone</p>
-                  <p className="text-sm text-gray-600">{client.phone || "Not provided"}</p>
+                  <p className="text-sm font-medium text-foreground">Phone</p>
+                  <p className="text-sm text-muted-foreground">{client.phone || "Not provided"}</p>
                 </div>
               </div>
-              <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="p-2 bg-purple-100 rounded-lg mt-0.5">
-                  <MapPin className="h-4 w-4 text-purple-600" />
+              <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
+                <div className="p-2 bg-info/10 rounded-lg mt-0.5">
+                  <MapPin className="h-4 w-4 text-info" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Address</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm font-medium text-foreground">Address</p>
+                  <p className="text-sm text-muted-foreground">
                     {client.address || "Not provided"}<br />
                     {client.city && client.state ? `${client.city}, ${client.state} ${client.zipCode || ""}`.trim() : "Not provided"}<br />
                     {client.country || "Not provided"}
@@ -233,27 +233,27 @@ export default function ClientDetailPage() {
             <CardHeader>
               <CardTitle className="flex flex-col items-center text-center space-y-2">
                 <div className="flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5 text-green-600" />
+                  <BarChart3 className="h-5 w-5 text-success" />
                   <span>Statistics</span>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex justify-between items-center p-3 rounded-lg bg-gray-50">
-                <span className="text-sm font-medium text-gray-600">Total Invoices</span>
-                <span className="font-bold text-gray-900">{client.invoiceCount}</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                <span className="text-sm font-medium text-muted-foreground">Total Invoices</span>
+                <span className="font-bold text-foreground">{client.invoiceCount}</span>
               </div>
-              <div className="flex justify-between items-center p-3 rounded-lg bg-gray-50">
-                <span className="text-sm font-medium text-gray-600">Total Value</span>
-                <span className="font-bold text-gray-900">${client.totalValue.toLocaleString()}</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                <span className="text-sm font-medium text-muted-foreground">Total Value</span>
+                <span className="font-bold text-foreground">${client.totalValue.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between items-center p-3 rounded-lg bg-green-50">
-                <span className="text-sm font-medium text-green-700">Paid</span>
-                <span className="font-bold text-green-800">${client.paidValue.toLocaleString()}</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-success/10">
+                <span className="text-sm font-medium text-success">Paid</span>
+                <span className="font-bold text-success">${client.paidValue.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between items-center p-3 rounded-lg bg-orange-50">
-                <span className="text-sm font-medium text-orange-700">Pending</span>
-                <span className="font-bold text-orange-800">${client.pendingValue.toLocaleString()}</span>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-warning/10">
+                <span className="text-sm font-medium text-warning">Pending</span>
+                <span className="font-bold text-warning">${client.pendingValue.toLocaleString()}</span>
               </div>
             </CardContent>
           </Card>
@@ -263,22 +263,22 @@ export default function ClientDetailPage() {
             <CardHeader>
               <CardTitle className="flex flex-col items-center text-center space-y-2">
                 <div className="flex items-center space-x-2">
-                  <Activity className="h-5 w-5 text-purple-600" />
+                  <Activity className="h-5 w-5 text-info" />
                   <span>Quick Actions</span>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button asChild className="w-full justify-start bg-blue-600 hover:bg-blue-700">
+              <Button asChild className="w-full justify-start">
                 <Link href="/invoices/new">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Invoice
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full justify-start hover:bg-gray-50">
-                <Link href={`/clients/${clientId}/edit`}>
+              <Button asChild variant="outline" className="w-full justify-start">
+                <Link href={`/clients`}>
                   <Edit className="mr-2 h-4 w-4" />
-                  Edit Client
+                  Back to Clients
                 </Link>
               </Button>
             </CardContent>
@@ -290,7 +290,7 @@ export default function ClientDetailPage() {
           <CardHeader>
             <CardTitle className="flex flex-col items-center text-center space-y-2">
               <div className="flex items-center space-x-2">
-                <FileText className="h-5 w-5 text-blue-600" />
+                <FileText className="h-5 w-5 text-primary" />
                 <span>Invoice History</span>
               </div>
             </CardTitle>
@@ -301,7 +301,7 @@ export default function ClientDetailPage() {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50">
+                <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Invoice #</TableHead>
                   <TableHead className="font-semibold">Issue Date</TableHead>
                   <TableHead className="font-semibold">Due Date</TableHead>
@@ -313,18 +313,18 @@ export default function ClientDetailPage() {
               <TableBody>
                 {clientInvoices.length > 0 ? (
                   clientInvoices.map((invoice) => (
-                    <TableRow key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                    <TableRow key={invoice.id} className="hover:bg-accent/50 transition-colors">
                       <TableCell className="font-medium">
                         <Link 
                           href={`/invoices/${invoice.id}`}
-                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                          className="text-primary hover:text-primary/80 hover:underline"
                         >
                           {invoice.invoiceNumber}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-gray-600">{invoice.issueDate}</TableCell>
-                      <TableCell className="text-gray-600">{invoice.dueDate}</TableCell>
-                      <TableCell className="font-semibold text-gray-900">${invoice.amount.toLocaleString()}</TableCell>
+                      <TableCell className="text-muted-foreground">{invoice.issueDate}</TableCell>
+                      <TableCell className="text-muted-foreground">{invoice.dueDate}</TableCell>
+                      <TableCell className="font-semibold text-foreground">${invoice.total.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge 
                           variant={
@@ -334,17 +334,17 @@ export default function ClientDetailPage() {
                             "destructive"
                           }
                           className={
-                            invoice.status === "PAID" ? "bg-green-100 text-green-800" :
-                            invoice.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
-                            invoice.status === "SENT" ? "bg-blue-100 text-blue-800" :
-                            "bg-red-100 text-red-800"
+                            invoice.status === "PAID" ? "bg-success/10 text-success" :
+                            invoice.status === "PENDING" ? "bg-warning/10 text-warning" :
+                            invoice.status === "SENT" ? "bg-info/10 text-info" :
+                            "bg-destructive/10 text-destructive"
                           }
                         >
                           {invoice.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild className="hover:bg-blue-50 hover:text-blue-600">
+                        <Button variant="ghost" size="sm" asChild className="hover:bg-[var(--green)]/10 hover:text-[var(--green)]">
                           <Link href={`/invoices/${invoice.id}`}>
                             View
                           </Link>
@@ -356,12 +356,12 @@ export default function ClientDetailPage() {
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-12">
                       <div className="flex flex-col items-center space-y-4">
-                        <FileText className="h-12 w-12 text-gray-300" />
+                        <FileText className="h-12 w-12 text-muted-foreground/40" />
                         <div>
-                          <p className="text-gray-500 font-medium">No invoices yet</p>
-                          <p className="text-sm text-gray-400">Create the first invoice for this client</p>
+                          <p className="text-muted-foreground font-medium">No invoices yet</p>
+                          <p className="text-sm text-muted-foreground/60">Create the first invoice for this client</p>
                         </div>
-                        <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                        <Button asChild>
                           <Link href="/invoices/new">
                             <Plus className="mr-2 h-4 w-4" />
                             Create First Invoice

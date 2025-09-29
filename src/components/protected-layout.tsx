@@ -32,7 +32,7 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navigation />
       <main className="p-6">
         {children}

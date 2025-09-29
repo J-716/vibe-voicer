@@ -27,15 +27,47 @@ export async function GET(
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
     }
 
-    // Convert Decimal fields to numbers for JSON serialization and map user settings to company
+    // Convert Decimal fields to numbers and recalculate totals
+    const items = invoice.items.map(item => {
+      const quantity = Number(item.quantity)
+      const unitPrice = Number(item.unitPrice)
+      const total = quantity * unitPrice
+      return {
+        ...item,
+        quantity,
+        unitPrice,
+        total,
+      }
+    })
+
+    // Recalculate totals from items
+    const recalculatedSubtotal = items.reduce((sum, item) => sum + item.total, 0)
+    const discountValue = Number(invoice.discountValue)
+    const discountAmount = Number(invoice.discountAmount)
+    const taxRate = Number(invoice.taxRate)
+    
+    // Calculate discount
+    let calculatedDiscountAmount = 0
+    if (discountValue > 0) {
+      if (invoice.discountType === "PERCENTAGE") {
+        calculatedDiscountAmount = (recalculatedSubtotal * discountValue) / 100
+      } else {
+        calculatedDiscountAmount = discountValue
+      }
+    }
+    
+    const subtotalAfterDiscount = recalculatedSubtotal - calculatedDiscountAmount
+    const calculatedTaxAmount = (subtotalAfterDiscount * taxRate) / 100
+    const calculatedTotal = subtotalAfterDiscount + calculatedTaxAmount
+
     const serializedInvoice = {
       ...invoice,
-      subtotal: Number(invoice.subtotal),
-      discountValue: Number(invoice.discountValue),
-      discountAmount: Number(invoice.discountAmount),
-      taxRate: Number(invoice.taxRate),
-      taxAmount: Number(invoice.taxAmount),
-      total: Number(invoice.total),
+      subtotal: recalculatedSubtotal,
+      discountValue: discountValue,
+      discountAmount: calculatedDiscountAmount,
+      taxRate: taxRate,
+      taxAmount: calculatedTaxAmount,
+      total: calculatedTotal,
       company: {
         name: invoice.user.settings?.companyName || invoice.user.name || "Your Company",
         email: invoice.user.settings?.email || invoice.user.email || "",
@@ -46,12 +78,7 @@ export async function GET(
         zipCode: invoice.user.settings?.zipCode || "",
         country: invoice.user.settings?.country || "",
       },
-      items: invoice.items.map(item => ({
-        ...item,
-        quantity: Number(item.quantity),
-        unitPrice: Number(item.unitPrice),
-        total: Number(item.total),
-      })),
+      items,
       payments: invoice.payments.map(payment => ({
         ...payment,
         amount: Number(payment.amount),

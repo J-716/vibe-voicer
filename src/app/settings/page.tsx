@@ -1,569 +1,562 @@
 "use client"
 
-import { ProtectedLayout } from "@/components/protected-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { toast } from "sonner"
-import { useState, useEffect } from "react"
-import { Save, User, Building, DollarSign, FileText, Settings as SettingsIcon, CreditCard, Percent, Hash, Calendar, Image, Mail, User2, Eye } from "lucide-react"
-import { getPaymentTermsPreview } from "@/lib/payment-terms"
-
-const companySchema = z.object({
-  companyName: z.string().min(1, "Full name is required"),
-  companyEmail: z.string().email("Invalid email address"),
-  logo: z.string().url("Invalid logo URL").optional().or(z.literal("")),
-})
-
-const invoiceSchema = z.object({
-  defaultTaxRate: z.number().min(0).max(100),
-  currency: z.string().min(1, "Currency is required"),
-  invoicePrefix: z.string().min(1, "Invoice prefix is required"),
-  nextInvoiceNumber: z.number().min(1, "Next invoice number must be at least 1"),
-  paymentTerms: z.string().optional(),
-})
-
-type CompanyFormData = z.infer<typeof companySchema>
-type InvoiceFormData = z.infer<typeof invoiceSchema>
-
-// Default values - will be replaced by API data
-const defaultCompanyData = {
-  companyName: "",
-  companyEmail: "",
-  logo: "",
-}
-
-const defaultInvoiceData = {
-  defaultTaxRate: 0,
-  currency: "USD",
-  invoicePrefix: "INV",
-  nextInvoiceNumber: 1,
-  paymentTerms: "",
-}
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { 
+  User, 
+  Building2, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  FileText, 
+  CreditCard, 
+  Download,
+  Settings as SettingsIcon,
+  User2,
+  Shield,
+  Lock,
+  Eye,
+  EyeOff,
+  Save,
+  DollarSign,
+  Percent,
+  Calendar,
+  Hash,
+  Key
+} from "lucide-react"
+import { Footer } from "@/components/footer"
+import { ProtectedLayout } from "@/components/protected-layout"
 
 export default function SettingsPage() {
-  const [companyData, setCompanyData] = useState(defaultCompanyData)
-  const [invoiceData, setInvoiceData] = useState(defaultInvoiceData)
-  const [loading, setLoading] = useState(true)
-  const [savingCompany, setSavingCompany] = useState(false)
-  const [savingInvoice, setSavingInvoice] = useState(false)
-
-  const companyForm = useForm<CompanyFormData>({
-    resolver: zodResolver(companySchema),
-    defaultValues: companyData,
+  const [showPassword, setShowPassword] = useState(false)
+  const [showApiKey, setShowApiKey] = useState(false)
+  const [activeTab, setActiveTab] = useState("company")
+  
+  // Personal settings state
+  const [personalSettings, setPersonalSettings] = useState({
+    fullName: "",
+    email: ""
   })
+  const [isSaving, setIsSaving] = useState(false)
 
-  const invoiceForm = useForm<InvoiceFormData>({
-    resolver: zodResolver(invoiceSchema),
-    defaultValues: invoiceData,
+  // Invoice settings state
+  const [invoiceSettings, setInvoiceSettings] = useState({
+    taxRate: 0,
+    currency: "USD",
+    invoicePrefix: "INV",
+    nextInvoiceNumber: 1,
+    paymentTerms: ""
   })
+  const [isSavingInvoice, setIsSavingInvoice] = useState(false)
 
-  // Fetch settings from API
+  // Account settings state
+  const [accountSettings, setAccountSettings] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  })
+  const [isSavingAccount, setIsSavingAccount] = useState(false)
+
+  // Load personal settings on component mount
   useEffect(() => {
-    const fetchSettings = async () => {
+    const loadPersonalSettings = async () => {
       try {
-        setLoading(true)
-        const response = await fetch("/api/settings", {
+        const response = await fetch("/api/settings/personal", {
           credentials: "include"
         })
+        
         if (response.ok) {
           const data = await response.json()
-          
-          // Ensure all fields have proper default values
-          const companyFormData = {
-            companyName: data.companyName || "",
-            companyEmail: data.companyEmail || "",
-            logo: data.logo || "",
-          }
-          
-          const invoiceFormData = {
-            defaultTaxRate: data.defaultTaxRate || 0,
+          setPersonalSettings({
+            fullName: data.fullName || "",
+            email: data.email || ""
+          })
+        }
+      } catch (error) {
+        console.error("Error loading personal settings:", error)
+      }
+    }
+
+    loadPersonalSettings()
+  }, [])
+
+  // Load invoice settings on component mount
+  useEffect(() => {
+    const loadInvoiceSettings = async () => {
+      try {
+        const response = await fetch("/api/settings/invoice", {
+          credentials: "include"
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setInvoiceSettings({
+            taxRate: data.taxRate || 0,
             currency: data.currency || "USD",
             invoicePrefix: data.invoicePrefix || "INV",
             nextInvoiceNumber: data.nextInvoiceNumber || 1,
-            paymentTerms: data.paymentTerms || "",
-          }
-          
-          setCompanyData(companyFormData)
-          setInvoiceData(invoiceFormData)
-          companyForm.reset(companyFormData)
-          invoiceForm.reset(invoiceFormData)
+            paymentTerms: data.paymentTerms || ""
+          })
         }
       } catch (error) {
-        console.error("Error fetching settings:", error)
-      } finally {
-        setLoading(false)
+        console.error("Error loading invoice settings:", error)
       }
     }
 
-    fetchSettings()
+    loadInvoiceSettings()
   }, [])
 
-  const onCompanySubmit = async (data: CompanyFormData) => {
+  // Handle personal settings save
+  const handleSavePersonalSettings = async () => {
     try {
-      setSavingCompany(true)
-      const response = await fetch("/api/settings", {
+      setIsSaving(true)
+      
+      // TODO: Replace with actual API call
+      const response = await fetch("/api/settings/personal", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify(personalSettings),
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.details || errorData.error || "Failed to update personal settings")
+        throw new Error("Failed to save personal settings")
       }
 
-      await response.json()
-      
-      toast.success("Personal settings updated successfully")
+      toast.success("Personal settings saved successfully!")
     } catch (error) {
-      console.error("Error updating personal settings:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to update personal settings")
+      console.error("Error saving personal settings:", error)
+      toast.error("Failed to save personal settings")
     } finally {
-      setSavingCompany(false)
+      setIsSaving(false)
     }
   }
 
-  const onInvoiceSubmit = async (data: InvoiceFormData) => {
+  // Handle invoice settings save
+  const handleSaveInvoiceSettings = async () => {
     try {
-      setSavingInvoice(true)
-      const response = await fetch("/api/settings", {
+      setIsSavingInvoice(true)
+      
+      const response = await fetch("/api/settings/invoice", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify(invoiceSettings),
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.details || errorData.error || "Failed to update invoice settings")
+        throw new Error("Failed to save invoice settings")
       }
 
-      await response.json()
-      
-      toast.success("Invoice settings updated successfully")
+      toast.success("Invoice settings saved successfully!")
     } catch (error) {
-      console.error("Error updating invoice settings:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to update invoice settings")
+      console.error("Error saving invoice settings:", error)
+      toast.error("Failed to save invoice settings")
     } finally {
-      setSavingInvoice(false)
+      setIsSavingInvoice(false)
     }
   }
 
-  if (loading) {
-    return (
-      <ProtectedLayout>
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <SettingsIcon className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-                <p className="text-gray-600">Manage your account and application preferences</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading settings...</p>
-            </div>
-          </div>
-        </div>
-      </ProtectedLayout>
-    )
+  // Handle account settings save
+  const handleSaveAccountSettings = async () => {
+    try {
+      setIsSavingAccount(true)
+      
+      // Validate passwords match
+      if (accountSettings.newPassword !== accountSettings.confirmPassword) {
+        toast.error("New passwords do not match")
+        return
+      }
+
+      const response = await fetch("/api/settings/account", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          currentPassword: accountSettings.currentPassword,
+          newPassword: accountSettings.newPassword
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to save account settings")
+      }
+
+      toast.success("Account settings saved successfully!")
+      
+      // Clear password fields
+      setAccountSettings({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      })
+    } catch (error) {
+      console.error("Error saving account settings:", error)
+      toast.error("Failed to save account settings")
+    } finally {
+      setIsSavingAccount(false)
+    }
   }
 
   return (
     <ProtectedLayout>
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <SettingsIcon className="h-6 w-6 text-blue-600" />
+      {/* Hero Section */}
+      <section className="relative py-24 lg:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--mauve)]/5 via-[var(--blue)]/5 to-[var(--peach)]/5"></div>
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9InZhcig--bWF1dmUpIiBmaWxsLW9wYWNpdHk9IjAuMDMiPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjIiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-40"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[var(--mauve)]/20 to-[var(--pink)]/20 rounded-3xl mb-8 group hover:scale-110 transition-transform duration-500">
+              <SettingsIcon className="h-10 w-10 text-[var(--mauve)] group-hover:rotate-12 transition-transform duration-500" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-              <p className="text-gray-600">Manage your account and application preferences</p>
-            </div>
+            <h1 className="text-6xl lg:text-8xl font-light text-foreground mb-8 group">
+              <span className="bg-gradient-to-r from-[var(--mauve)] via-[var(--blue)] to-[var(--peach)] bg-clip-text text-transparent transition-all duration-700">
+                Settings
+              </span>
+            </h1>
+            <p className="text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Customize your experience and manage your account preferences
+            </p>
           </div>
         </div>
+      </section>
 
-        <Tabs defaultValue="company" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="company" className="flex items-center space-x-2">
-              <User2 className="h-4 w-4" />
-              <span>Personal</span>
-            </TabsTrigger>
-            <TabsTrigger value="invoice" className="flex items-center space-x-2">
-              <FileText className="h-4 w-4" />
-              <span>Invoice</span>
-            </TabsTrigger>
-            <TabsTrigger value="account" className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>Account</span>
-            </TabsTrigger>
-          </TabsList>
+      <div className="space-y-16">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-16">
+          {/* Quick Stats */}
+          <section className="py-16 mb-20">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl font-bold text-foreground mb-4">
+                  <span className="bg-gradient-to-r from-[var(--mauve)] to-[var(--blue)] bg-clip-text text-transparent">Quick Access</span>
+                </h2>
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                  Jump into the settings you need most
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+                <Card 
+                  className={`border-l-4 border-l-[var(--mauve)] hover:shadow-xl hover:shadow-[var(--mauve)]/20 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer group h-full ${
+                    activeTab === "company" 
+                      ? "shadow-xl shadow-[var(--mauve)]/20 -translate-y-2 scale-[1.02]" 
+                      : ""
+                  }`}
+                  onClick={() => setActiveTab("company")}
+                >
+                  <CardHeader className="text-center pb-4 h-full flex flex-col justify-center items-center min-h-[200px]">
+                    <div className="p-4 rounded-xl bg-[var(--mauve)]/10 w-fit mx-auto mb-4 group-hover:bg-[var(--mauve)]/20 group-hover:scale-110 transition-all duration-300">
+                      <User2 className="h-8 w-8 text-[var(--mauve)] group-hover:rotate-12 transition-transform duration-300" />
+                    </div>
+                    <CardTitle className="text-xl mb-2 text-center">Personal Info</CardTitle>
+                    <CardDescription className="text-base text-center">
+                      Update your personal details and preferences
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+                  
+                <Card 
+                  className={`border-l-4 border-l-[var(--blue)] hover:shadow-xl hover:shadow-[var(--blue)]/20 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer group h-full ${
+                    activeTab === "invoice" 
+                      ? "shadow-xl shadow-[var(--blue)]/20 -translate-y-2 scale-[1.02]" 
+                      : ""
+                  }`}
+                  onClick={() => setActiveTab("invoice")}
+                >
+                  <CardHeader className="text-center pb-4 h-full flex flex-col justify-center items-center min-h-[200px]">
+                    <div className="p-4 rounded-xl bg-[var(--blue)]/10 w-fit mx-auto mb-4 group-hover:bg-[var(--blue)]/20 group-hover:scale-110 transition-all duration-300">
+                      <FileText className="h-8 w-8 text-[var(--blue)] group-hover:rotate-12 transition-transform duration-300" />
+                    </div>
+                    <CardTitle className="text-xl mb-2 text-center">Invoice Settings</CardTitle>
+                    <CardDescription className="text-base text-center">
+                      Customize default invoice preferences
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+                  
+                <Card 
+                  className={`border-l-4 border-l-[var(--green)] hover:shadow-xl hover:shadow-[var(--green)]/20 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer group h-full ${
+                    activeTab === "account" 
+                      ? "shadow-xl shadow-[var(--green)]/20 -translate-y-2 scale-[1.02]" 
+                      : ""
+                  }`}
+                  onClick={() => setActiveTab("account")}
+                >
+                  <CardHeader className="text-center pb-4 h-full flex flex-col justify-center items-center min-h-[200px]">
+                    <div className="p-4 rounded-xl bg-[var(--green)]/10 w-fit mx-auto mb-4 group-hover:bg-[var(--green)]/20 group-hover:scale-110 transition-all duration-300">
+                      <SettingsIcon className="h-8 w-8 text-[var(--green)] group-hover:rotate-12 transition-transform duration-300" />
+                    </div>
+                    <CardTitle className="text-xl mb-2 text-center">Account</CardTitle>
+                    <CardDescription className="text-base text-center">
+                      Manage your account and security settings
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+            </div>
+          </section>
+          
 
           <TabsContent value="company">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex flex-col items-center text-center space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <User2 className="h-5 w-5 text-blue-600" />
-                    <span>Personal Information</span>
-                  </div>
+            <Card className="border-l-4 border-l-[var(--mauve)] shadow-lg">
+              <CardHeader className="text-center pb-6">
+                <div className="p-3 rounded-xl bg-[var(--mauve)]/10 w-fit mx-auto mb-4">
+                  <User2 className="h-8 w-8 text-[var(--mauve)]" />
+                </div>
+                <CardTitle className="text-2xl font-bold">
+                  Personal Information
                 </CardTitle>
-                <CardDescription className="text-center">
-                  Update your personal details that appear on invoices
+                <CardDescription className="text-lg">
+                  Update your personal details
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Form {...companyForm}>
-                  <form onSubmit={companyForm.handleSubmit(onCompanySubmit)} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={companyForm.control}
-                        name="companyName"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel className="flex items-center space-x-2 text-sm font-medium">
-                              <User2 className="h-4 w-4 text-blue-600" />
-                              <span>Full Name *</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="Your Full Name" 
-                                {...field}
-                                className="hover:border-blue-300 focus:border-blue-500"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={companyForm.control}
-                        name="companyEmail"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel className="flex items-center space-x-2 text-sm font-medium">
-                              <Mail className="h-4 w-4 text-green-600" />
-                              <span>Email *</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="email" 
-                                placeholder="billing@yourcompany.com" 
-                                {...field}
-                                className="hover:border-blue-300 focus:border-blue-500"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={companyForm.control}
-                      name="logo"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="flex items-center space-x-2 text-sm font-medium">
-                            <Image className="h-4 w-4 text-purple-600" />
-                            <span>Logo URL</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="url" 
-                              placeholder="https://example.com/logo.png" 
-                              {...field}
-                              className="hover:border-blue-300 focus:border-blue-500"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                          <p className="text-sm text-gray-500">
-                            Enter a URL to your company logo image. The image will appear on your invoices.
-                          </p>
-                        </FormItem>
-                      )}
+              <CardContent className="p-8">
+                <div className="max-w-md mx-auto space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-base font-medium text-foreground text-center block">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="fullName"
+                      placeholder="Enter your full name"
+                      value={personalSettings.fullName}
+                      onChange={(e) => setPersonalSettings(prev => ({ ...prev, fullName: e.target.value }))}
+                      className="h-12 border-2 rounded-lg text-base bg-background/50 backdrop-blur-sm border-[var(--mauve)]/20 focus:border-[var(--mauve)] focus:ring-2 focus:ring-[var(--mauve)]/20 transition-all duration-200"
                     />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-base font-medium text-foreground text-center block">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={personalSettings.email}
+                      onChange={(e) => setPersonalSettings(prev => ({ ...prev, email: e.target.value }))}
+                      className="h-12 border-2 rounded-lg text-base bg-background/50 backdrop-blur-sm border-[var(--blue)]/20 focus:border-[var(--blue)] focus:ring-2 focus:ring-[var(--blue)]/20 transition-all duration-200"
+                    />
+                  </div>
+                </div>
 
-                    <div className="flex justify-end pt-4 border-t">
-                      <Button 
-                        type="submit" 
-                        className="bg-blue-600 hover:bg-blue-700"
-                        disabled={savingCompany}
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        {savingCompany ? "Saving..." : "Save Personal Settings"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
+                <div className="flex justify-center pt-8">
+                  <Button 
+                    onClick={handleSavePersonalSettings}
+                    disabled={isSaving}
+                    className="bg-[var(--mauve)] hover:bg-[var(--mauve)]/90 disabled:opacity-50"
+                  >
+                    <Save className="h-6 w-6 mr-3" />
+                    {isSaving ? "Saving..." : "Save Personal Settings"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="invoice">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex flex-col items-center text-center space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-5 w-5 text-blue-600" />
-                    <span>Invoice Settings</span>
-                  </div>
+            <Card className="border-l-4 border-l-[var(--blue)] shadow-lg">
+              <CardHeader className="text-center pb-6">
+                <div className="p-3 rounded-xl bg-[var(--blue)]/10 w-fit mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-[var(--blue)]" />
+                </div>
+                <CardTitle className="text-2xl font-bold">
+                  Invoice Settings
                 </CardTitle>
-                <CardDescription className="text-center">
-                  Configure default settings for new invoices
+                <CardDescription className="text-lg">
+                  Customize your default invoice preferences
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Form {...invoiceForm}>
-                  <form onSubmit={invoiceForm.handleSubmit(onInvoiceSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={invoiceForm.control}
-                        name="defaultTaxRate"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel className="flex items-center space-x-2 text-sm font-medium">
-                              <Percent className="h-4 w-4 text-orange-600" />
-                              <span>Default Tax Rate (%)</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.001"
-                                min="0"
-                                max="100"
-                                {...field}
-                                value={field.value || ""}
-                                onChange={(e) => {
-                                  const value = e.target.value
-                                  field.onChange(value === "" ? 0 : parseFloat(value) || 0)
-                                }}
-                                className="hover:border-blue-300 focus:border-blue-500"
-                              />
-                            </FormControl>
-                            <p className="text-xs text-gray-500">
-                              Enter exact percentage (e.g., 8.375 for 8.375%)
-                            </p>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={invoiceForm.control}
-                        name="currency"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel className="flex items-center space-x-2 text-sm font-medium">
-                              <DollarSign className="h-4 w-4 text-green-600" />
-                              <span>Currency</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="USD" 
-                                {...field}
-                                className="hover:border-blue-300 focus:border-blue-500"
-                              />
-                            </FormControl>
-                            <p className="text-xs text-gray-500">
-                              Enter currency code (e.g., USD, EUR, GBP)
-                            </p>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={invoiceForm.control}
-                        name="invoicePrefix"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel className="flex items-center space-x-2 text-sm font-medium">
-                              <Hash className="h-4 w-4 text-blue-600" />
-                              <span>Invoice Prefix</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="INV" 
-                                {...field}
-                                className="hover:border-blue-300 focus:border-blue-500"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={invoiceForm.control}
-                        name="nextInvoiceNumber"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel className="flex items-center space-x-2 text-sm font-medium">
-                              <Hash className="h-4 w-4 text-indigo-600" />
-                              <span>Next Invoice Number</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                min="1"
-                                {...field}
-                                value={field.value || ""}
-                                onChange={(e) => {
-                                  const value = e.target.value
-                                  field.onChange(value === "" ? 1 : parseInt(value) || 1)
-                                }}
-                                className="hover:border-blue-300 focus:border-blue-500"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+              <CardContent className="p-8">
+                <div className="max-w-2xl mx-auto space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="taxRate" className="text-base font-medium text-foreground text-center block">
+                        Tax Rate (%)
+                      </Label>
+                      <Input
+                        id="taxRate"
+                        type="number"
+                        placeholder="0"
+                        value={invoiceSettings.taxRate}
+                        onChange={(e) => setInvoiceSettings(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
+                        className="h-12 border-2 rounded-lg text-base bg-background/50 backdrop-blur-sm border-[var(--yellow)]/20 focus:border-[var(--yellow)] focus:ring-2 focus:ring-[var(--yellow)]/20 transition-all duration-200"
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="currency" className="text-base font-medium text-foreground text-center block">
+                        Currency
+                      </Label>
+                      <Input
+                        id="currency"
+                        placeholder="USD"
+                        value={invoiceSettings.currency}
+                        onChange={(e) => setInvoiceSettings(prev => ({ ...prev, currency: e.target.value }))}
+                        className="h-12 border-2 rounded-lg text-base bg-background/50 backdrop-blur-sm border-[var(--green)]/20 focus:border-[var(--green)] focus:ring-2 focus:ring-[var(--green)]/20 transition-all duration-200"
+                      />
+                    </div>
+                  </div>
 
-                    <FormField
-                      control={invoiceForm.control}
-                      name="paymentTerms"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="flex items-center space-x-2 text-sm font-medium">
-                            <CreditCard className="h-4 w-4 text-purple-600" />
-                            <span>Default Payment Terms</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="e.g., All invoices are due within [X] days of the invoice date, after which a late fee of 30% interest will be applied..." 
-                              rows={3}
-                              {...field}
-                              className="hover:border-blue-300 focus:border-blue-500"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                          {field.value && field.value.includes('[X]') && (
-                            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <Eye className="h-4 w-4 text-blue-600" />
-                                <span className="text-sm font-medium text-blue-900">Preview (30-day example):</span>
-                              </div>
-                              <p className="text-sm text-blue-800">
-                                {getPaymentTermsPreview(field.value)}
-                              </p>
-                            </div>
-                          )}
-                        </FormItem>
-                      )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="invoicePrefix" className="text-base font-medium text-foreground text-center block">
+                        Invoice Prefix
+                      </Label>
+                      <Input
+                        id="invoicePrefix"
+                        placeholder="INV"
+                        value={invoiceSettings.invoicePrefix}
+                        onChange={(e) => setInvoiceSettings(prev => ({ ...prev, invoicePrefix: e.target.value }))}
+                        className="h-12 border-2 rounded-lg text-base bg-background/50 backdrop-blur-sm border-[var(--mauve)]/20 focus:border-[var(--mauve)] focus:ring-2 focus:ring-[var(--mauve)]/20 transition-all duration-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="nextNumber" className="text-base font-medium text-foreground text-center block">
+                        Next Invoice Number
+                      </Label>
+                      <Input
+                        id="nextNumber"
+                        type="number"
+                        placeholder="1"
+                        value={invoiceSettings.nextInvoiceNumber}
+                        onChange={(e) => setInvoiceSettings(prev => ({ ...prev, nextInvoiceNumber: parseInt(e.target.value) || 1 }))}
+                        className="h-12 border-2 rounded-lg text-base bg-background/50 backdrop-blur-sm border-[var(--pink)]/20 focus:border-[var(--pink)] focus:ring-2 focus:ring-[var(--pink)]/20 transition-all duration-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="paymentTerms" className="text-base font-medium text-foreground text-center block">
+                      Default Payment Terms
+                    </Label>
+                    <Textarea
+                      id="paymentTerms"
+                      placeholder="e.g., Net 30 days, Due on receipt, etc."
+                      value={invoiceSettings.paymentTerms}
+                      onChange={(e) => setInvoiceSettings(prev => ({ ...prev, paymentTerms: e.target.value }))}
+                      className="min-h-[120px] border-2 rounded-lg text-base bg-background/50 backdrop-blur-sm border-[var(--teal)]/20 focus:border-[var(--teal)] focus:ring-2 focus:ring-[var(--teal)]/20 transition-all duration-200"
                     />
+                  </div>
+                </div>
 
-                    <div className="flex justify-end pt-4 border-t">
-                      <Button 
-                        type="submit" 
-                        className="bg-blue-600 hover:bg-blue-700"
-                        disabled={savingInvoice}
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        {savingInvoice ? "Saving..." : "Save Invoice Settings"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
+                <div className="flex justify-center pt-8">
+                  <Button 
+                    onClick={handleSaveInvoiceSettings}
+                    disabled={isSavingInvoice}
+                    className="bg-[var(--blue)] hover:bg-[var(--blue)]/90"
+                  >
+                    <Save className="h-6 w-6 mr-3" />
+                    {isSavingInvoice ? "Saving..." : "Save Invoice Settings"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="account">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex flex-col items-center text-center space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <User className="h-5 w-5 text-blue-600" />
-                    <span>Account Settings</span>
-                  </div>
+            <Card className="border-l-4 border-l-[var(--green)] shadow-lg">
+              <CardHeader className="text-center pb-6">
+                <div className="p-3 rounded-xl bg-[var(--green)]/10 w-fit mx-auto mb-4">
+                  <Shield className="h-8 w-8 text-[var(--green)]" />
+                </div>
+                <CardTitle className="text-2xl font-bold">
+                  Account & Security
                 </CardTitle>
-                <CardDescription className="text-center">
-                  Manage your account preferences and security
+                <CardDescription className="text-lg">
+                  Manage your account security and preferences
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-6 border rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                          <User className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 text-lg">Profile Information</h3>
-                          <p className="text-sm text-gray-600">
-                            Update your personal information and preferences
-                          </p>
-                        </div>
-                      </div>
-                      <Button variant="outline" className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300">
-                        Update Profile
+              <CardContent className="p-8">
+                <div className="max-w-2xl mx-auto space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword" className="text-sm font-medium text-foreground text-center block">
+                      Current Password
+                    </Label>
+                    <div className="relative max-w-md mx-auto">
+                      <Input
+                        id="currentPassword"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your current password"
+                        value={accountSettings.currentPassword}
+                        onChange={(e) => setAccountSettings(prev => ({ ...prev, currentPassword: e.target.value }))}
+                        className="h-10 border-2 rounded-lg text-sm bg-background/50 backdrop-blur-sm border-[var(--red)]/20 focus:border-[var(--red)] focus:ring-2 focus:ring-[var(--red)]/20 transition-all duration-200 pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-[var(--red)]/10"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                       </Button>
                     </div>
                   </div>
-                  
-                  <div className="p-6 border rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-green-100 rounded-lg">
-                          <SettingsIcon className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 text-lg">Security</h3>
-                          <p className="text-sm text-gray-600">
-                            Manage your password and security settings
-                          </p>
-                        </div>
-                      </div>
-                      <Button variant="outline" className="hover:bg-green-50 hover:text-green-600 hover:border-green-300">
-                        Change Password
-                      </Button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword" className="text-sm font-medium text-foreground text-center block">
+                        New Password
+                      </Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        placeholder="Enter your new password"
+                        value={accountSettings.newPassword}
+                        onChange={(e) => setAccountSettings(prev => ({ ...prev, newPassword: e.target.value }))}
+                        className="h-10 border-2 rounded-lg text-sm bg-background/50 backdrop-blur-sm border-[var(--green)]/20 focus:border-[var(--green)] focus:ring-2 focus:ring-[var(--green)]/20 transition-all duration-200"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground text-center block">
+                        Confirm New Password
+                      </Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="Confirm your new password"
+                        value={accountSettings.confirmPassword}
+                        onChange={(e) => setAccountSettings(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        className="h-10 border-2 rounded-lg text-sm bg-background/50 backdrop-blur-sm border-[var(--blue)]/20 focus:border-[var(--blue)] focus:ring-2 focus:ring-[var(--blue)]/20 transition-all duration-200"
+                      />
                     </div>
                   </div>
-                  
-                  <div className="p-6 border rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-orange-100 rounded-lg">
-                          <FileText className="h-5 w-5 text-orange-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 text-lg">Data Export</h3>
-                          <p className="text-sm text-gray-600">
-                            Download your data in a portable format
-                          </p>
-                        </div>
-                      </div>
-                      <Button variant="outline" className="hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300">
-                        Export Data
-                      </Button>
-                    </div>
-                  </div>
+                </div>
+
+                <div className="flex justify-center pt-8">
+                  <Button 
+                    onClick={handleSaveAccountSettings}
+                    disabled={isSavingAccount}
+                    className="bg-[var(--green)] hover:bg-[var(--green)]/90"
+                  >
+                    <Save className="h-6 w-6 mr-3" />
+                    {isSavingAccount ? "Saving..." : "Save Account Settings"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+      </div>
+
+      <div className="mt-16">
+        <Footer />
       </div>
     </ProtectedLayout>
   )
